@@ -1,12 +1,12 @@
 CXX = g++
 CXXFLAGS = -Wall -Werror
-OBJ = main.o
+OBJ = rshell.o
 
 all: $(OBJ)
-	$(CXX) $(OBJ) -o rshell
+	$(CXX) $(OBJ) -o rshell.out
 
-main: main.cpp
-	$(CXX) $(CXXFLAGS) -c main.cpp
+rshell: rshell.cpp
+	$(CXX) $(CXXFLAGS) -c rshell.cpp
 
 clean:
 	rm *.o *.out
