@@ -5,7 +5,7 @@ OBJ = rshell.o
 all: $(OBJ)
 	$(CXX) $(OBJ) -o rshell.out
 
-rshell.o:
+rshell.o: src/rshell.cpp
 	$(CXX) $(CXXFLAGS) -c src/rshell.cpp
 
 clean:
