@@ -38,7 +38,10 @@ void user_input(char * prog, char ** args) {
 
 /* Parses string, returns substring of first command,
  * changes index pointer to after substring.
- * Substring contains connector if applicable */
+ * Substring contains connector if applicable
+ * Returns a negative value for index if error has been
+ * found i.e. ("&&&" or "|||") */
+
 std::string parse_string(std::string s, int* index) {
     // Start at 0 index by default
     // Otherwise, start at index
@@ -55,20 +58,26 @@ std::string parse_string(std::string s, int* index) {
         /* If a quotation mark is found, keep going until
          * closing quotation mark is found */
         if (s.at(i) == '\"') {
-            //std::cout << "found a quotation mark" << std::endl;
-            //std::cout << "First: " << i << std::endl;
+            //std::cout << "found a double quote" << std::endl;
             do {
                 i++;
             } while (i < s.size() && s.at(i) != '\"');
-            //std::cout << "Second: " << i << std::endl;
+        }
+
+        /* Same as above, but for a single quote
+         * Strings such as Thor's Day and They're
+         * will not be accepted */
+        if (s.at(i) == '\'') {
+            //std::cout << "found a single quote" << std::endl;
+            do {
+                i++;
+            } while (i < s.size() && s.at(i) != '\'');
         }
         if (i < s.size()) {
             // Delimiters
             // If ';', "&&", or "||" is found,
             // return substring from initial index to
             // delimiter
-            // TODO: Fix so it doesn't start at 0 all the time
-            // Also, catch instances of &&& and |||
             if (s.at(i) == ';') {
                 *index = i + 1;
                 return s.substr(start, i - start + 1);
@@ -76,7 +85,13 @@ std::string parse_string(std::string s, int* index) {
                 // Check if next character is also '&'
                 i++;
                 if (i < s.size() && s.at(i) == '&')  {
-                    std::cout << "i: " << i << std::endl;
+                    // Check if third character is also a '&', if so
+                    // return error
+                    if (i+1 < s.size() && s.at(i+1) == '&') {
+                        *index = -1;
+                        return s;
+                    }
+                  //  std::cout << "i: " << i << std::endl;
                     *index = i + 1;
                     return s.substr(start,i - start + 1);
                 }
@@ -84,6 +99,12 @@ std::string parse_string(std::string s, int* index) {
                 // Check if next character is also '|'
                 i++;
                 if (i < s.size() && s.at(i) == '|')  {
+                    // Check if third character is also a '|', if so
+                    // return error
+                    if (i+1 < s.size() && s.at(i+1) == '|') {
+                        *index = -2;
+                        return s;
+                    }
                     *index = i + 1;
                     return s.substr(start,i - start + 1);
                 }
@@ -135,9 +156,11 @@ int main(int argc, char **argv) {
     getline(std::cin, test);
     while ((unsigned) i < test.size()) {
         std::cout << parse_string(test, &i) << "****" << std::endl;
+        if (i == -1) std::cout << "error: &&& found" << std::endl;
+        else if (i == -2) std::cout << "error: ||| found" << std::endl;
         //std::cout << parse_string(test, &i) << "****" << std::endl;
         //std::cout << parse_string(test, &i) << "****" << std::endl;
-        std::cout << i << std::endl;
+        //std::cout << i << std::endl;
         //std::cin.get();
     }
     // rshell_loop(argv);
