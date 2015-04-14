@@ -35,6 +35,14 @@ void user_input(char * prog, char ** args) {
     return;
 }
 
+/* Takes string and returns pointers to char* of program
+ * and char** of arguments in program */
+void return_command(std::string s, char * prog, char ** args) {
+
+    return;
+
+}
+
 
 /* Parses string, returns substring of first command,
  * changes index pointer to after substring.
