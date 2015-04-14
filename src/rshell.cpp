@@ -41,8 +41,14 @@ void user_input(char * prog, char ** args) {
  * Substring contains connector if applicable
  * Returns a negative value for index if error has been
  * found i.e. ("&&&" or "|||") */
+// TODO: Fix error when "&& " or "|| "
 
 std::string parse_string(std::string s, int* index) {
+    /* If index < 0, meant error was returned last parse
+     * Quit parsing */
+    if (*index < 0) {
+        return s;
+    }
     // Start at 0 index by default
     // Otherwise, start at index
     // i traverses string
@@ -86,6 +92,7 @@ std::string parse_string(std::string s, int* index) {
                 i++;
                 if (i < s.size() && s.at(i) == '&')  {
                     // Check if third character is also a '&', if so
+                    // If this is commented out, then &&& will be split
                     // return error
                     if (i+1 < s.size() && s.at(i+1) == '&') {
                         *index = -1;
@@ -93,7 +100,7 @@ std::string parse_string(std::string s, int* index) {
                     }
                   //  std::cout << "i: " << i << std::endl;
                     *index = i + 1;
-                    return s.substr(start,i - start + 1);
+                    return s.substr(start, i - start + 1);
                 }
             } else if (s.at(i) == '|') {
                 // Check if next character is also '|'
@@ -106,14 +113,17 @@ std::string parse_string(std::string s, int* index) {
                         return s;
                     }
                     *index = i + 1;
-                    return s.substr(start,i - start + 1);
+                    return s.substr(start, i - start + 1);
                 }
             }
         }
         ++i;
     }
-    // No delimiters found, return original string
-    return s;
+    // No delimiters found, return remaining string
+    // Set index to last character
+    //std::cout << "reached the end" << std::endl;
+    *index = i + 1;
+    return s.substr(start, i - start);
 }
 
 void rshell_loop (char ** argv) {
@@ -154,14 +164,10 @@ int main(int argc, char **argv) {
     int i = 0;
     std::string test;
     getline(std::cin, test);
-    while ((unsigned) i < test.size()) {
+    while ((unsigned) i < test.size() && i >= 0) {
         std::cout << parse_string(test, &i) << "****" << std::endl;
         if (i == -1) std::cout << "error: &&& found" << std::endl;
         else if (i == -2) std::cout << "error: ||| found" << std::endl;
-        //std::cout << parse_string(test, &i) << "****" << std::endl;
-        //std::cout << parse_string(test, &i) << "****" << std::endl;
-        //std::cout << i << std::endl;
-        //std::cin.get();
     }
     // rshell_loop(argv);
     return 0;
