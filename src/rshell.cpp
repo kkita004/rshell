@@ -1,6 +1,7 @@
 #include <iostream>
 #include <cstdlib>
 #include <string>
+#include <sstream>
 
 // fork()
 #include <unistd.h>
@@ -38,9 +39,16 @@ void user_input(char * prog, char ** args) {
 /* Takes string and returns pointers to char* of program
  * and char** of arguments in program */
 void return_command(std::string s, char * prog, char ** args) {
+ //   unsigned i = 0, j = 0;
+    std::stringstream ss (s);
+    std::string outs;
 
+    while (ss >> outs) {
+        std::cout << outs;
+        std::cin.get();
+
+    };
     return;
-
 }
 
 
@@ -76,6 +84,12 @@ std::string parse_string(std::string s, int* index) {
             do {
                 i++;
             } while (i < s.size() && s.at(i) != '\"');
+            /* No closing quotation found */
+            if (i == s.size()) {
+                std::cout << "error: no closing double quotation found" << std::endl;
+                *index = -1;
+                return s;
+            }
         }
 
         /* Same as above, but for a single quote
@@ -86,6 +100,11 @@ std::string parse_string(std::string s, int* index) {
             do {
                 i++;
             } while (i < s.size() && s.at(i) != '\'');
+            if (i == s.size()) {
+                std::cout << "error: no closing single quotation found" << std::endl;
+                *index = -2;
+                return s;
+            }
         }
         if (i < s.size()) {
             // Delimiters
@@ -103,7 +122,7 @@ std::string parse_string(std::string s, int* index) {
                     // If this is commented out, then &&& will be split
                     // return error
                     if (i+1 < s.size() && s.at(i+1) == '&') {
-                        *index = -1;
+                        *index = -3;
                         return s;
                     }
                   //  std::cout << "i: " << i << std::endl;
@@ -117,7 +136,7 @@ std::string parse_string(std::string s, int* index) {
                     // Check if third character is also a '|', if so
                     // return error
                     if (i+1 < s.size() && s.at(i+1) == '|') {
-                        *index = -2;
+                        *index = -4;
                         return s;
                     }
                     *index = i + 1;
@@ -172,11 +191,13 @@ int main(int argc, char **argv) {
     int i = 0;
     std::string test;
     getline(std::cin, test);
-    while ((unsigned) i < test.size() && i >= 0) {
+   // return_command(test, 0 ,0);
+     while ((unsigned) i < test.size() && i >= 0) {
         std::cout << parse_string(test, &i) << "****" << std::endl;
-        if (i == -1) std::cout << "error: &&& found" << std::endl;
-        else if (i == -2) std::cout << "error: ||| found" << std::endl;
+        //if (i == -1) std::cout << "error: &&& found" << std::endl;
+        //else if (i == -2) std::cout << "error: ||| found" << std::endl;
     }
+
     // rshell_loop(argv);
     return 0;
 }
