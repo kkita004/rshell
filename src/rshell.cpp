@@ -3,6 +3,7 @@
 #include <string>
 #include <sstream>
 #include <algorithm>
+#include <cstring>
 
 // fork()
 #include <unistd.h>
@@ -20,23 +21,6 @@
  * Tokenizing
  * Connectors
  */
-
-
-
-
-/* Should store commands in a queue of Commands */
-struct Command {
-    char * program;
-    char ** args;
-};
-
-/* Parses user input, sets pointers to programs and args
- * Don't forget to deallocate pointers after calling this
- * function */
-void user_input(char * prog, char ** args) {
-    return;
-}
-
 
 /* Removes whitespace from start and end of string */
 std::string trim(std::string s) {
@@ -60,15 +44,15 @@ std::string trim(std::string s) {
  * 1: &&
  * 2: ||
  * */
-std::string check_connector(std::string s, int &con) {
-    con = 0;
+std::string check_connector(std::string s, int* con) {
+    *con = 0;
     if (s.at(s.size() - 1) == ';') {
         return s.substr(0, s.size() - 1);
     } else if (s.substr(s.size() - 2) == "&&") {
-        con = 1;
+        *con = 1;
         return s.substr(0, s.size() - 2);
     } else if (s.substr(s.size() - 2) == "||") {
-        con = 2;
+        *con = 2;
         return s.substr(0, s.size() - 2);
     }
 
@@ -77,20 +61,39 @@ std::string check_connector(std::string s, int &con) {
 }
 
 
-/* Takes string and returns pointers to char* of program
- * and char** of arguments in program
+/* Takes string and returns pointers to char* of program,
+ * char** of arguments in program,
+ * int* to return connector
  * */
-void return_command(std::string s, char * prog, char ** args) {
+void return_command(std::string s, char* prog, char** args, int* connector) {
  //   unsigned i = 0, j = 0;
  //   need to tokenize string
     std::string curr_str = trim(s);
+    check_connector(curr_str, connector);
+    curr_str = trim(curr_str);
+
+    // Blank command, return error
+    if (curr_str.size() == 0) {
+        prog = 0;
+        args = 0;
+        return;
+    }
+
+    // program only, no arguments passed in
+    if (curr_str.find(' ') == std::string::npos) {
+        char * cstr = new char [curr_str.length() + 1];
+        std::strcpy(cstr, curr_str.c_str());
+        prog = cstr;
+
+        args = 0;
+        return;
+    }
 
 
 
-    // Get first word: This will be the program
 
-
-//    unsigned i = 0;
+    // Get first word: This will be the program to run
+    //    unsigned i = 0;
     /*
     std::stringstream ss (s);
     std::string outs;
@@ -108,7 +111,6 @@ void return_command(std::string s, char * prog, char ** args) {
  * Substring contains connector if applicable
  * Returns a negative value for index if error has been
  * found i.e. ("&&&" or "|||") */
-// TODO: Fix error when "&& " or "|| "
 
 std::string parse_string(std::string s, int* index) {
     /* If index < 0, meant error was returned last parse
@@ -208,12 +210,12 @@ void rshell_loop (char ** argv) {
     std::cout << std::endl;
     std::string input_s;
     int pid;
-    char ** args = 0;
-    char * c = 0;
+    //char ** args = 0;
+    //char * c = 0;
 
     do {
         std::cout << "$ ";
-        user_input(c, args);
+        //user_input(c, args);
         //std::cin >> input_s;
 
         pid = fork();
@@ -240,6 +242,8 @@ void rshell_loop (char ** argv) {
 
 int main(int argc, char **argv) {
     int i = 0;
+    char * prog = 0;
+    char ** args = 0;
 
     std::string test;
     getline(std::cin, test);
@@ -250,12 +254,24 @@ int main(int argc, char **argv) {
      while ((unsigned) i < test.size() && i >= 0) {
         parse = parse_string(test, &i);
 
+//TODO: Fix return_command
         std::cout << "Initial string:****" << parse << "****" << std::endl;
+        return_command(parse, prog, args, &c);
+        std::cout << parse;
+        printf("%s \n", prog);
+
+
+        if (prog != 0) delete prog;
+        if (args != 0) delete[] args;
+        /*
         std::cout << "Trim(1):****" << trim(parse) << "****" << std::endl;
-        parse = check_connector(parse, c);
+        parse = check_connector(parse, &c);
         std::cout << "Remove connectors:****" << parse << "****" << std::endl;
         std::cout << "c: " << c << std::endl;
         std::cout << "Trim(2):****" << trim(parse) << "****" << std::endl;
+        */
+
+        //std::cout << "RETURN COMMAND" << std::endl;
         std::cout << "===============================================" << std::endl;
 
         //if (i == -1) std::cout << "error: &&& found" << std::endl;
