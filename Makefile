@@ -3,11 +3,12 @@ CXXFLAGS = -Wall -Werror -ansi -pedantic
 OBJ = rshell.o
 
 all: $(OBJ)
-	$(CXX) $(OBJ) -o rshell.out
+	mkdir -p bin
+	$(CXX) $(OBJ) -o bin/rshell
 
 rshell.o: src/rshell.cpp
 	$(CXX) $(CXXFLAGS) -c src/rshell.cpp
 
 clean:
-	rm *.o *.out
+	rm -r *.o bin
 
