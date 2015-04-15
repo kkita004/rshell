@@ -39,8 +39,9 @@ void user_input(char * prog, char ** args) {
 
 
 /* Removes whitespace from start and end of string */
-
 std::string trim(std::string s) {
+    /* If null, do nothing */
+    if (s == "")  return s;
     std::string str = s;
     unsigned i = 0;
     while (str.at(i) == ' ') ++i;
@@ -53,20 +54,43 @@ std::string trim(std::string s) {
     return str;
 }
 
+/* Checks connector, returns string without connector
+ * and indicates what connector was at end
+ * 0: none or ;
+ * 1: &&
+ * 2: ||
+ * */
+std::string check_connector(std::string s, int &con) {
+    con = 0;
+    if (s.at(s.size() - 1) == ';') {
+        return s.substr(0, s.size() - 1);
+    } else if (s.substr(s.size() - 2) == "&&") {
+        con = 1;
+        return s.substr(0, s.size() - 2);
+    } else if (s.substr(s.size() - 2) == "||") {
+        con = 2;
+        return s.substr(0, s.size() - 2);
+    }
+
+    // no connector found, default to 0
+    return s;
+}
+
 
 /* Takes string and returns pointers to char* of program
- * and char** of arguments in program */
+ * and char** of arguments in program
+ * */
 void return_command(std::string s, char * prog, char ** args) {
  //   unsigned i = 0, j = 0;
  //   need to tokenize string
-
-    unsigned i = 0;
-    for (i = 0; i < s.size(); ++i) {
+    std::string curr_str = trim(s);
 
 
 
+    // Get first word: This will be the program
 
-    }
+
+//    unsigned i = 0;
     /*
     std::stringstream ss (s);
     std::string outs;
@@ -215,17 +239,28 @@ void rshell_loop (char ** argv) {
 }
 
 int main(int argc, char **argv) {
-    //int i = 0;
+    int i = 0;
+
     std::string test;
     getline(std::cin, test);
    // std::cout << test << "****";
-    std::cout << trim(test) << "****" <<  std::endl;
+    int c = 0;
    // return_command(test, 0 ,0);
-   //  while ((unsigned) i < test.size() && i >= 0) {
-   //     std::cout << parse_string(test, &i) << "****" << std::endl;
+    std::string parse;
+     while ((unsigned) i < test.size() && i >= 0) {
+        parse = parse_string(test, &i);
+
+        std::cout << "Initial string:****" << parse << "****" << std::endl;
+        std::cout << "Trim(1):****" << trim(parse) << "****" << std::endl;
+        parse = check_connector(parse, c);
+        std::cout << "Remove connectors:****" << parse << "****" << std::endl;
+        std::cout << "c: " << c << std::endl;
+        std::cout << "Trim(2):****" << trim(parse) << "****" << std::endl;
+        std::cout << "===============================================" << std::endl;
+
         //if (i == -1) std::cout << "error: &&& found" << std::endl;
         //else if (i == -2) std::cout << "error: ||| found" << std::endl;
-   // }
+    }
 
     // rshell_loop(argv);
     return 0;
