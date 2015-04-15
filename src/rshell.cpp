@@ -2,6 +2,7 @@
 #include <cstdlib>
 #include <string>
 #include <sstream>
+#include <algorithm>
 
 // fork()
 #include <unistd.h>
@@ -36,18 +37,44 @@ void user_input(char * prog, char ** args) {
     return;
 }
 
+
+/* Removes whitespace from start and end of string */
+
+std::string trim(std::string s) {
+    std::string str = s;
+    unsigned i = 0;
+    while (str.at(i) == ' ') ++i;
+    str.erase(0, i);
+
+    i = str.size() - 1;
+    while (str.at(i) == ' ') --i;
+    str.erase(i + 1);
+
+    return str;
+}
+
+
 /* Takes string and returns pointers to char* of program
  * and char** of arguments in program */
 void return_command(std::string s, char * prog, char ** args) {
  //   unsigned i = 0, j = 0;
+ //   need to tokenize string
+
+    unsigned i = 0;
+    for (i = 0; i < s.size(); ++i) {
+
+
+
+
+    }
+    /*
     std::stringstream ss (s);
     std::string outs;
 
     while (ss >> outs) {
         std::cout << outs;
         std::cin.get();
-
-    };
+    };*/
     return;
 }
 
@@ -188,15 +215,17 @@ void rshell_loop (char ** argv) {
 }
 
 int main(int argc, char **argv) {
-    int i = 0;
+    //int i = 0;
     std::string test;
     getline(std::cin, test);
+   // std::cout << test << "****";
+    std::cout << trim(test) << "****" <<  std::endl;
    // return_command(test, 0 ,0);
-     while ((unsigned) i < test.size() && i >= 0) {
-        std::cout << parse_string(test, &i) << "****" << std::endl;
+   //  while ((unsigned) i < test.size() && i >= 0) {
+   //     std::cout << parse_string(test, &i) << "****" << std::endl;
         //if (i == -1) std::cout << "error: &&& found" << std::endl;
         //else if (i == -2) std::cout << "error: ||| found" << std::endl;
-    }
+   // }
 
     // rshell_loop(argv);
     return 0;
