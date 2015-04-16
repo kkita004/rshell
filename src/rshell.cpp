@@ -21,6 +21,8 @@
 //using namespace boost;
 
 
+/* Current bug, will continue doing functions until error is reached,
+ * will need to fix in next implementation */
 
 /* TODO:
  * User Input
@@ -45,23 +47,46 @@ str.erase(i + 1);
 return str;
 } */
 
+
+/* Deallocates memory */
+void free_char(char* prog, char** args, unsigned args_num) {
+    if (prog != 0) {
+        delete[] prog;
+        prog = 0;
+    }
+    if (args != 0) {
+        for (unsigned j = 0; j < args_num; ++j)
+            delete[] args[j];
+        delete[] args;
+        args = 0;
+    }
+
+}
+
 /* Checks connector, returns string without connector
  * and indicates what connector was at end
  * 0: none or ;
  * 1: &&
  * 2: ||
  * */
+
 std::string check_connector(std::string s, int* con) {
     *con = 0;
-    if (s.size() > 1) {
+    // Single character, special case if it is only ';'
+    if (s.size() == 1) {
+        if (s.at(0) == ';') {
+            return "";
+        }
+    }
+    else if (s.size() > 1) {
         if (s.at(s.size() - 1) == ';') {
             return s.substr(0, s.size() - 1);
         } else if (s.substr(s.size() - 2) == "&&") {
-            std::cout << "This contains \"&&\"" << std::endl;
+            //std::cout << "This contains \"&&\"" << std::endl;
             *con = 1;
             return s.substr(0, s.size() - 2);
         } else if (s.substr(s.size() - 2) == "||") {
-            std::cout << "This contains \"||\"" << std::endl;
+            //std::cout << "This contains \"||\"" << std::endl;
             *con = 2;
             return s.substr(0, s.size() - 2);
         }
@@ -83,23 +108,24 @@ unsigned return_command(std::string s, char*& prog, char**& args, int* connector
     //   need to tokenize string
 
     std::string curr_str = s;
-    std::cout << "Trimming string" << std::endl;
+    //std::cout << "Trimming string" << std::endl;
     trim(curr_str);
     // check_connector will remove end and set connector
-    std::cout << "checking connector" << std::endl;
+    //std::cout << "checking connector" << std::endl;
     curr_str = check_connector(curr_str, connector);
-    std::cout << "Trimming string 2" << std::endl;
+    //std::cout << "Trimming string 2" << std::endl;
     trim(curr_str);
 
     // Blank command, return error
     if (curr_str.size() == 0) {
+    //    std::cout << "empty command" << std::endl;
         prog = 0;
         args = 0;
         return 0;
     }
     // Vector to hold commands and args
     std::vector<std::string> v;
-    std::cout << "Trimmed String: " << curr_str << std::endl;
+    //std::cout << "Trimmed String: " << curr_str << std::endl;
 
     // Tokenize string
     tokenizer<escaped_list_separator<char> > t(
@@ -117,22 +143,22 @@ unsigned return_command(std::string s, char*& prog, char**& args, int* connector
 
 
     // Take command name
-    std::cout << "Taking command name" << std::endl;
+    //std::cout << "Taking command name" << std::endl;
     char * cstr = new char [v.at(0).size() + 1];
-    std::cout << "copying string over" << std::endl;
+    //std::cout << "copying string over" << std::endl;
     std::strcpy(cstr,v.at(0).c_str());
-    std::cout << "pointing to new string" << std::endl;
+    //std::cout << "pointing to new string" << std::endl;
     prog = cstr;
 
 
     // Take arguments if any
-    std::cout << "Taking arguments " << std::endl;
+    //std::cout << "Taking arguments " << std::endl;
     char ** arguments;
     if (v.size() - 1 > 0) {
 
         arguments = new char*[v.size() - 1];
 
-        std::cout << "Converting strings to arguments" << std::endl;
+        //std::cout << "Converting strings to arguments" << std::endl;
         for (unsigned i = 1; i < v.size(); ++i) {
             char * cstr = new char [v.at(i).size() + 1];
             std::strcpy(cstr, v.at(i).c_str());
@@ -141,13 +167,13 @@ unsigned return_command(std::string s, char*& prog, char**& args, int* connector
 
         // Output char array
 
-        std::cout << "Outputting char arrays" << std::endl;
-        for (unsigned i = 1; i < v.size(); ++i) {
-            for (unsigned j = 0; j < v.at(i).size(); ++j) {
-                std::cout << arguments[i-1][j];
-            }
-            std::cout << std::endl;
-        }
+        //std::cout << "Outputting char arrays" << std::endl;
+        //for (unsigned i = 1; i < v.size(); ++i) {
+        //    for (unsigned j = 0; j < v.at(i).size(); ++j) {
+        //        std::cout << arguments[i-1][j];
+        //    }
+        //    std::cout << std::endl;
+        //}
         args = arguments;
     }
     /*
@@ -184,7 +210,7 @@ unsigned return_command(std::string s, char*& prog, char**& args, int* connector
        std::cout << outs;
        std::cin.get();
        };*/
-    std::cout << "exiting function" << std::endl;
+    //std::cout << "exiting function" << std::endl;
     return v.size() - 1;
 }
 
@@ -291,42 +317,84 @@ std::string parse_string(std::string s, int* index) {
     }
     // No delimiters found, return remaining string
     // Set index to last character
-    std::cout << "reached the end" << std::endl;
+    //std::cout << "reached the end" << std::endl;
     *index = i + 1;
     return s.substr(start, i - start);
 }
 
-void rshell_loop (char ** argv) {
-    std::cout << std::endl;
+void rshell_loop () {
     std::string input_s;
-    int pid;
-    //char ** args = 0;
-    //char * c = 0;
+    std::cout << std::endl;
 
-    do {
+    int i = 0;
+    int c = 0;
+
+    char e[] = {"exit"};
+
+    while(1) {
         std::cout << "$ ";
-        //user_input(c, args);
-        //std::cin >> input_s;
+        getline(std::cin, input_s);
+        int pid;
+        while ((unsigned) i < input_s.size() && i >= 0) {
+            char * prog = 0;
+            char ** args = 0;
+            std::string parse = parse_string(input_s, &i);
 
-        pid = fork();
-        // Something went wrong
-        if (pid == -1) {
-            perror("fork error");
-            exit(1);
-        }
-        // Child Process
-        else if (pid == 0) {
-            execvp(input_s.c_str(), argv);
-        }
-        // Parent Process
-        else if (pid > 0) {
-            // wait(0) till child process finishes
-            if (wait(0) == -1) {
-                perror("child process error");
+            unsigned args_num = return_command(parse, prog, args, &c);
+
+            // If command is exit
+            if (!strcmp(e, prog)) {
+                std::cout << "attempt to exit" << std::endl;
+                free_char(prog, args, args_num);
+                std::exit(1);
+            }
+
+            pid = fork();
+            // Something went wrong
+            if (pid == -1) {
+                perror("fork error");
                 exit(1);
             }
+            // Child Process
+            else if (pid == 0) {
+                execvp(prog, args);
+            }
+            // Parent Process
+            else if (pid > 0) {
+                // wait(0) till child process finishes
+                int status = 0;
+                if (wait(&status) == -1) {
+                    //child failed to change
+                    perror("child process error");
+                    //exit(1);
+                    //
+                } else {
+                    //child successfully changed
+                    if (status == 0) {
+                        // return value is true
+                        if (c == 2) {
+                            // connector is ||, expected failure,
+                            // received success
+                            // break
+                            free_char(prog, args, args_num);
+                            break;
+                        }
+                    }
+                    if (status != 0) {
+                        // return value is false;
+                        if (c == 1) {
+                            free_char(prog, args, args_num);
+                            break;
+                        }
+                    }
+
+                }
+            }
+
+            // Deallocate char arrays
+            free_char(prog, args, args_num);
         }
-    } while (input_s != "exit");
+    }
     return;
 }
 
@@ -356,6 +424,13 @@ void test() {
         //        std::cout << "****" << std::endl;
 
         //printf("%s \n", prog);
+
+        // Empty command, error
+        if (prog == 0 && args == 0 && args_num == 0) {
+            std::cout << "error: empty" << std::endl;
+            break;
+
+        }
 
 
 
@@ -395,7 +470,7 @@ void test() {
 }
 
 int main(int argc, char **argv) {
-    // rshell_loop(argv);
-    test();
+    rshell_loop();
+    //test();
     return 0;
 }
