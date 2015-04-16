@@ -17,6 +17,7 @@
 #include <stdio.h>
 
 #include <boost/tokenizer.hpp>
+#include <boost/algorithm/string.hpp>
 //using namespace boost;
 
 
@@ -28,8 +29,9 @@
  */
 
 /* Removes whitespace from start and end of string */
+/*
 std::string trim(std::string s) {
-    /* If null, do nothing */
+    // If null, do nothing
     if (s == "")  return s;
     std::string str = s;
     unsigned i = 0;
@@ -41,7 +43,7 @@ std::string trim(std::string s) {
     str.erase(i + 1);
 
     return str;
-}
+} */
 
 /* Checks connector, returns string without connector
  * and indicates what connector was at end
@@ -77,10 +79,12 @@ unsigned return_command(std::string s, char*& prog, char**& args, int* connector
     using namespace boost;
     //   unsigned i = 0, j = 0;
     //   need to tokenize string
-    std::string curr_str = trim(s);
+
+    std::string curr_str = s;
+    trim(curr_str);
     // check_connector will remove end and set connector
     curr_str = check_connector(curr_str, connector);
-    curr_str = trim(curr_str);
+    trim(curr_str);
 
     // Blank command, return error
     if (curr_str.size() == 0) {
@@ -314,7 +318,8 @@ void rshell_loop (char ** argv) {
     return;
 }
 
-int main(int argc, char **argv) {
+
+void test() {
     int i = 0;
 
     std::string test;
@@ -374,7 +379,11 @@ int main(int argc, char **argv) {
         //if (i == -1) std::cout << "error: &&& found" << std::endl;
         //else if (i == -2) std::cout << "error: ||| found" << std::endl;
     }
+    return;
+}
 
+int main(int argc, char **argv) {
     // rshell_loop(argv);
+    test();
     return 0;
 }
