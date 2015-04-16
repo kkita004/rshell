@@ -69,8 +69,9 @@ std::string check_connector(std::string s, int* con) {
 /* Takes string and returns pointers to char* of program,
  * char** of arguments in program,
  * int* to return connector
+ * Returns number of arguments
  * */
-void return_command(std::string s, char*& prog, char**& args, int* connector) {
+unsigned return_command(std::string s, char*& prog, char**& args, int* connector) {
     using namespace boost;
  //   unsigned i = 0, j = 0;
  //   need to tokenize string
@@ -83,8 +84,10 @@ void return_command(std::string s, char*& prog, char**& args, int* connector) {
     if (curr_str.size() == 0) {
         prog = 0;
         args = 0;
-        return;
+        return 0;
     }
+    // Vector to hold commands and args
+    std::vector<std::string> v;
     tokenizer<escaped_list_separator<char> > t(
         curr_str,
         escaped_list_separator<char>("\\", " ", "\"\'"));
@@ -92,10 +95,35 @@ void return_command(std::string s, char*& prog, char**& args, int* connector) {
         tokenizer<escaped_list_separator<char> >::iterator i
             = t.begin();
         i != t.end(); ++i) {
-        std::cout << *i << std::endl;
+        // Take strings and put them into a vector of strings
+        //std::cout << *i << std::endl;
+        v.push_back(*i);
 
     }
 
+
+    // Take command name
+    std::cout << "Taking command name" << std::endl;
+    std::cin.get();
+    char * cstr = new char [v.at(0).size() + 1];
+    std::strcpy(cstr, curr_str.c_str());
+    prog = cstr;
+
+
+    // Take arguments if any
+    std::cout << "Taking arguments " << std::endl;
+    std::cin.get();
+    char ** arguments;
+    if (v.size() - 1 > 0) {
+        arguments = new char*[v.size() - 1];
+    }
+    for (unsigned i = 1; i < v.size(); ++i) {
+        char * cstr = new char [v.at(i).size() + 1];
+        std::strcpy(cstr, v.at(i).c_str());
+        arguments[i-1] = cstr;
+    }
+
+    args = arguments;
     /*
     // program only, no arguments passed in
     if (curr_str.find(' ') == std::string::npos) {
@@ -120,9 +148,6 @@ void return_command(std::string s, char*& prog, char**& args, int* connector) {
     //std::stringstream ss(curr_str);
     //program << ss;
 
-
-
-
     // Get first word: This will be the program to run
     //    unsigned i = 0;
     /*
@@ -133,7 +158,9 @@ void return_command(std::string s, char*& prog, char**& args, int* connector) {
         std::cout << outs;
         std::cin.get();
     };*/
-    return;
+    std::cout << "exiting function" << std::endl;
+    std::cin.get();
+    return v.size() - 1;
 }
 
 
@@ -287,7 +314,7 @@ int main(int argc, char **argv) {
 
 //TODO: Fix return_command
         std::cout << "Initial string:****" << parse << "****" << std::endl;
-        return_command(parse, prog, args, &c);
+        unsigned args_num = return_command(parse, prog, args, &c);
 //        std::cout << parse << std::endl;
        // unsigned j = 0;
 //        std::cout << "output:****";
@@ -300,8 +327,15 @@ int main(int argc, char **argv) {
 
 
 
+        std::cout << "Deallocating prog" << std::endl;
         if (prog != 0) delete prog;
-        if (args != 0) delete[] args;
+        std::cout << "Deallocating args" << std::endl;
+        std::cout << "arg count: " << args_num << std::endl;
+        if (args != 0) {
+            for (unsigned j = 0; j < args_num; ++j)
+                delete[] args[j];
+            delete[] args;
+        }
         /*
         std::cout << "Trim(1):****" << trim(parse) << "****" << std::endl;
         parse = check_connector(parse, &c);
