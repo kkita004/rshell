@@ -16,6 +16,11 @@
 // strtok()
 #include <stdio.h>
 
+#include <boost/tokenizer.hpp>
+//using namespace boost;
+
+
+
 /* TODO:
  * User Input
  * Tokenizing
@@ -65,10 +70,12 @@ std::string check_connector(std::string s, int* con) {
  * char** of arguments in program,
  * int* to return connector
  * */
-void return_command(std::string s, char* prog, char** args, int* connector) {
+void return_command(std::string s, char*& prog, char**& args, int* connector) {
+    using namespace boost;
  //   unsigned i = 0, j = 0;
  //   need to tokenize string
     std::string curr_str = trim(s);
+    // check_connector will remove end and set connector
     check_connector(curr_str, connector);
     curr_str = trim(curr_str);
 
@@ -78,16 +85,40 @@ void return_command(std::string s, char* prog, char** args, int* connector) {
         args = 0;
         return;
     }
+    tokenizer<escaped_list_separator<char> > t(
+        curr_str,
+        escaped_list_separator<char>("\\", " ", "\"\'"));
+    for (
+        tokenizer<escaped_list_separator<char> >::iterator i
+            = t.begin();
+        i != t.end(); ++i) {
+        std::cout << *i << std::endl;
 
+    }
+
+    /*
     // program only, no arguments passed in
     if (curr_str.find(' ') == std::string::npos) {
+        std::cout << "no spaces found " << std::endl;
         char * cstr = new char [curr_str.length() + 1];
         std::strcpy(cstr, curr_str.c_str());
         prog = cstr;
+        std::cout << "Copied string:****";
+        for (unsigned i = 0; i < std::strlen(prog); ++i) {
+            std::cout << prog[i];
+        }
+        std::cout << "****" << std::endl;
 
         args = 0;
+        std::cout << "exiting return_command" << std::endl;
         return;
-    }
+    }*/
+
+    // program and infinitely many arguments
+    // first extract the program to be run
+    //std::string program;
+    //std::stringstream ss(curr_str);
+    //program << ss;
 
 
 
@@ -257,8 +288,16 @@ int main(int argc, char **argv) {
 //TODO: Fix return_command
         std::cout << "Initial string:****" << parse << "****" << std::endl;
         return_command(parse, prog, args, &c);
-        std::cout << parse;
-        printf("%s \n", prog);
+//        std::cout << parse << std::endl;
+       // unsigned j = 0;
+//        std::cout << "output:****";
+//        for (unsigned j = 0; j < std::strlen(prog); ++j) {
+//            std::cout << prog[j];
+//        }
+//        std::cout << "****" << std::endl;
+
+        //printf("%s \n", prog);
+
 
 
         if (prog != 0) delete prog;
