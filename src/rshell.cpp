@@ -308,7 +308,7 @@ std::string parse_string(std::string s, int* index) {
         }
         // If comment is found, ignore rest of line
         if (s.at(i) == '#') {
-            std::cout << "comment found, ignoring rest of line" << std::endl;
+            //std::cout << "comment found, ignoring rest of line" << std::endl;
             *index = s.size();
 
             return s.substr(start, i - start);
@@ -326,8 +326,6 @@ void rshell_loop () {
     std::string input_s;
     std::cout << std::endl;
 
-    int i = 0;
-    int c = 0;
 
     char e[] = {"exit"};
 
@@ -335,6 +333,8 @@ void rshell_loop () {
         std::cout << "$ ";
         getline(std::cin, input_s);
         int pid;
+        int i = 0;
+        int c = 0;
         while ((unsigned) i < input_s.size() && i >= 0) {
             char * prog = 0;
             char ** args = 0;
@@ -344,7 +344,6 @@ void rshell_loop () {
 
             // If command is exit
             if (!strcmp(e, prog)) {
-                std::cout << "attempt to exit" << std::endl;
                 free_char(prog, args, args_num);
                 std::exit(1);
             }
