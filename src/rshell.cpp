@@ -30,19 +30,19 @@
 
 /* Removes whitespace from start and end of string */
 /*
-std::string trim(std::string s) {
-    // If null, do nothing
-    if (s == "")  return s;
-    std::string str = s;
-    unsigned i = 0;
-    while (str.at(i) == ' ') ++i;
-    str.erase(0, i);
+   std::string trim(std::string s) {
+// If null, do nothing
+if (s == "")  return s;
+std::string str = s;
+unsigned i = 0;
+while (str.at(i) == ' ') ++i;
+str.erase(0, i);
 
-    i = str.size() - 1;
-    while (str.at(i) == ' ') --i;
-    str.erase(i + 1);
+i = str.size() - 1;
+while (str.at(i) == ' ') --i;
+str.erase(i + 1);
 
-    return str;
+return str;
 } */
 
 /* Checks connector, returns string without connector
@@ -53,16 +53,18 @@ std::string trim(std::string s) {
  * */
 std::string check_connector(std::string s, int* con) {
     *con = 0;
-    if (s.at(s.size() - 1) == ';') {
-        return s.substr(0, s.size() - 1);
-    } else if (s.substr(s.size() - 2) == "&&") {
-        std::cout << "This contains \"&&\"" << std::endl;
-        *con = 1;
-        return s.substr(0, s.size() - 2);
-    } else if (s.substr(s.size() - 2) == "||") {
-        std::cout << "This contains \"||\"" << std::endl;
-        *con = 2;
-        return s.substr(0, s.size() - 2);
+    if (s.size() > 1) {
+        if (s.at(s.size() - 1) == ';') {
+            return s.substr(0, s.size() - 1);
+        } else if (s.substr(s.size() - 2) == "&&") {
+            std::cout << "This contains \"&&\"" << std::endl;
+            *con = 1;
+            return s.substr(0, s.size() - 2);
+        } else if (s.substr(s.size() - 2) == "||") {
+            std::cout << "This contains \"||\"" << std::endl;
+            *con = 2;
+            return s.substr(0, s.size() - 2);
+        }
     }
 
     // no connector found, default to 0
@@ -81,9 +83,12 @@ unsigned return_command(std::string s, char*& prog, char**& args, int* connector
     //   need to tokenize string
 
     std::string curr_str = s;
+    std::cout << "Trimming string" << std::endl;
     trim(curr_str);
     // check_connector will remove end and set connector
+    std::cout << "checking connector" << std::endl;
     curr_str = check_connector(curr_str, connector);
+    std::cout << "Trimming string 2" << std::endl;
     trim(curr_str);
 
     // Blank command, return error
@@ -208,8 +213,8 @@ std::string parse_string(std::string s, int* index) {
     // std::cout << s.size();
 
     while (i < s.size()) {
-        /* If a quotation mark is found, keep going until
-         * closing quotation mark is found */
+        // If a quotation mark is found, keep going until
+        // closing quotation mark is found
         if (s.at(i) == '\"') {
             //std::cout << "found a double quote" << std::endl;
             do {
@@ -223,9 +228,9 @@ std::string parse_string(std::string s, int* index) {
             }
         }
 
-        /* Same as above, but for a single quote
-         * Strings such as Thor's Day and They're
-         * will not be accepted */
+        // Same as above, but for a single quote
+        // Strings such as Thor's Day and They're
+        // will not be accepted
         if (s.at(i) == '\'') {
             //std::cout << "found a single quote" << std::endl;
             do {
@@ -275,11 +280,18 @@ std::string parse_string(std::string s, int* index) {
                 }
             }
         }
+        // If comment is found, ignore rest of line
+        if (s.at(i) == '#') {
+            std::cout << "comment found, ignoring rest of line" << std::endl;
+            *index = s.size();
+
+            return s.substr(start, i - start);
+        }
         ++i;
     }
     // No delimiters found, return remaining string
     // Set index to last character
-    //std::cout << "reached the end" << std::endl;
+    std::cout << "reached the end" << std::endl;
     *index = i + 1;
     return s.substr(start, i - start);
 }
