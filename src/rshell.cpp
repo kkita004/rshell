@@ -54,9 +54,11 @@ std::string check_connector(std::string s, int* con) {
     if (s.at(s.size() - 1) == ';') {
         return s.substr(0, s.size() - 1);
     } else if (s.substr(s.size() - 2) == "&&") {
+        std::cout << "This contains \"&&\"" << std::endl;
         *con = 1;
         return s.substr(0, s.size() - 2);
     } else if (s.substr(s.size() - 2) == "||") {
+        std::cout << "This contains \"||\"" << std::endl;
         *con = 2;
         return s.substr(0, s.size() - 2);
     }
@@ -73,11 +75,11 @@ std::string check_connector(std::string s, int* con) {
  * */
 unsigned return_command(std::string s, char*& prog, char**& args, int* connector) {
     using namespace boost;
- //   unsigned i = 0, j = 0;
- //   need to tokenize string
+    //   unsigned i = 0, j = 0;
+    //   need to tokenize string
     std::string curr_str = trim(s);
     // check_connector will remove end and set connector
-    check_connector(curr_str, connector);
+    curr_str = check_connector(curr_str, connector);
     curr_str = trim(curr_str);
 
     // Blank command, return error
@@ -88,13 +90,16 @@ unsigned return_command(std::string s, char*& prog, char**& args, int* connector
     }
     // Vector to hold commands and args
     std::vector<std::string> v;
+    std::cout << "Trimmed String: " << curr_str << std::endl;
+
+    // Tokenize string
     tokenizer<escaped_list_separator<char> > t(
-        curr_str,
-        escaped_list_separator<char>("\\", " ", "\"\'"));
+            curr_str,
+            escaped_list_separator<char>("\\", " ", "\"\'"));
     for (
-        tokenizer<escaped_list_separator<char> >::iterator i
+            tokenizer<escaped_list_separator<char> >::iterator i
             = t.begin();
-        i != t.end(); ++i) {
+            i != t.end(); ++i) {
         // Take strings and put them into a vector of strings
         //std::cout << *i << std::endl;
         v.push_back(*i);
@@ -104,42 +109,54 @@ unsigned return_command(std::string s, char*& prog, char**& args, int* connector
 
     // Take command name
     std::cout << "Taking command name" << std::endl;
-    std::cin.get();
     char * cstr = new char [v.at(0).size() + 1];
-    std::strcpy(cstr, curr_str.c_str());
+    std::cout << "copying string over" << std::endl;
+    std::strcpy(cstr,v.at(0).c_str());
+    std::cout << "pointing to new string" << std::endl;
     prog = cstr;
 
 
     // Take arguments if any
     std::cout << "Taking arguments " << std::endl;
-    std::cin.get();
     char ** arguments;
     if (v.size() - 1 > 0) {
-        arguments = new char*[v.size() - 1];
-    }
-    for (unsigned i = 1; i < v.size(); ++i) {
-        char * cstr = new char [v.at(i).size() + 1];
-        std::strcpy(cstr, v.at(i).c_str());
-        arguments[i-1] = cstr;
-    }
 
-    args = arguments;
+        arguments = new char*[v.size() - 1];
+
+        std::cout << "Converting strings to arguments" << std::endl;
+        for (unsigned i = 1; i < v.size(); ++i) {
+            char * cstr = new char [v.at(i).size() + 1];
+            std::strcpy(cstr, v.at(i).c_str());
+            arguments[i-1] = cstr;
+        }
+
+        // Output char array
+
+        std::cout << "Outputting char arrays" << std::endl;
+        for (unsigned i = 1; i < v.size(); ++i) {
+            for (unsigned j = 0; j < v.at(i).size(); ++j) {
+                std::cout << arguments[i-1][j];
+            }
+            std::cout << std::endl;
+        }
+        args = arguments;
+    }
     /*
     // program only, no arguments passed in
     if (curr_str.find(' ') == std::string::npos) {
-        std::cout << "no spaces found " << std::endl;
-        char * cstr = new char [curr_str.length() + 1];
-        std::strcpy(cstr, curr_str.c_str());
-        prog = cstr;
-        std::cout << "Copied string:****";
-        for (unsigned i = 0; i < std::strlen(prog); ++i) {
-            std::cout << prog[i];
-        }
-        std::cout << "****" << std::endl;
+    std::cout << "no spaces found " << std::endl;
+    char * cstr = new char [curr_str.length() + 1];
+    std::strcpy(cstr, curr_str.c_str());
+    prog = cstr;
+    std::cout << "Copied string:****";
+    for (unsigned i = 0; i < std::strlen(prog); ++i) {
+    std::cout << prog[i];
+    }
+    std::cout << "****" << std::endl;
 
-        args = 0;
-        std::cout << "exiting return_command" << std::endl;
-        return;
+    args = 0;
+    std::cout << "exiting return_command" << std::endl;
+    return;
     }*/
 
     // program and infinitely many arguments
@@ -151,15 +168,14 @@ unsigned return_command(std::string s, char*& prog, char**& args, int* connector
     // Get first word: This will be the program to run
     //    unsigned i = 0;
     /*
-    std::stringstream ss (s);
-    std::string outs;
+       std::stringstream ss (s);
+       std::string outs;
 
-    while (ss >> outs) {
-        std::cout << outs;
-        std::cin.get();
-    };*/
+       while (ss >> outs) {
+       std::cout << outs;
+       std::cin.get();
+       };*/
     std::cout << "exiting function" << std::endl;
-    std::cin.get();
     return v.size() - 1;
 }
 
@@ -236,7 +252,7 @@ std::string parse_string(std::string s, int* index) {
                         *index = -3;
                         return s;
                     }
-                  //  std::cout << "i: " << i << std::endl;
+                    //  std::cout << "i: " << i << std::endl;
                     *index = i + 1;
                     return s.substr(start, i - start + 1);
                 }
@@ -300,35 +316,34 @@ void rshell_loop (char ** argv) {
 
 int main(int argc, char **argv) {
     int i = 0;
-    char * prog = 0;
-    char ** args = 0;
 
     std::string test;
     getline(std::cin, test);
-   // std::cout << test << "****";
+    // std::cout << test << "****";
     int c = 0;
-   // return_command(test, 0 ,0);
+    // return_command(test, 0 ,0);
     std::string parse;
-     while ((unsigned) i < test.size() && i >= 0) {
+    while ((unsigned) i < test.size() && i >= 0) {
+        char * prog = 0;
+        char ** args = 0;
         parse = parse_string(test, &i);
 
-//TODO: Fix return_command
         std::cout << "Initial string:****" << parse << "****" << std::endl;
         unsigned args_num = return_command(parse, prog, args, &c);
-//        std::cout << parse << std::endl;
-       // unsigned j = 0;
-//        std::cout << "output:****";
-//        for (unsigned j = 0; j < std::strlen(prog); ++j) {
-//            std::cout << prog[j];
-//        }
-//        std::cout << "****" << std::endl;
+        //        std::cout << parse << std::endl;
+        // unsigned j = 0;
+        //        std::cout << "output:****";
+        //        for (unsigned j = 0; j < std::strlen(prog); ++j) {
+        //            std::cout << prog[j];
+        //        }
+        //        std::cout << "****" << std::endl;
 
         //printf("%s \n", prog);
 
 
 
         std::cout << "Deallocating prog" << std::endl;
-        if (prog != 0) delete prog;
+        if (prog != 0) delete[] prog;
         std::cout << "Deallocating args" << std::endl;
         std::cout << "arg count: " << args_num << std::endl;
         if (args != 0) {
@@ -336,13 +351,22 @@ int main(int argc, char **argv) {
                 delete[] args[j];
             delete[] args;
         }
+
+
+        if (c==0) {
+            std::cout << "run next command (;)" << std::endl;
+        } else if (c==1) {
+            std::cout << "if success, run (&&)" << std::endl;
+        } else if (c==2) {
+            std::cout << "if fail, run (||)" << std::endl;
+        }
         /*
-        std::cout << "Trim(1):****" << trim(parse) << "****" << std::endl;
-        parse = check_connector(parse, &c);
-        std::cout << "Remove connectors:****" << parse << "****" << std::endl;
-        std::cout << "c: " << c << std::endl;
-        std::cout << "Trim(2):****" << trim(parse) << "****" << std::endl;
-        */
+           std::cout << "Trim(1):****" << trim(parse) << "****" << std::endl;
+           parse = check_connector(parse, &c);
+           std::cout << "Remove connectors:****" << parse << "****" << std::endl;
+           std::cout << "c: " << c << std::endl;
+           std::cout << "Trim(2):****" << trim(parse) << "****" << std::endl;
+           */
 
         //std::cout << "RETURN COMMAND" << std::endl;
         std::cout << "===============================================" << std::endl;
