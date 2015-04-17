@@ -24,7 +24,6 @@ This sentence will be output.
 $ echo "The ; && and || will be ignored while in these quotes."
 The ; && and || will be ignored while in these quotes.
 ```
-
 An error will be detected if quotes are left unclosed.
 
 * If an empty command is entered, it will stop the entire chain of commands.
@@ -36,7 +35,7 @@ $ ls -l; echo testing &&     ; echo "will not appear"
 Uses the [`boost`](https://www.boost.org) library for trimming and tokenizing.
 Uses `C++11` features.
 
-## Known Bugs
+## Known Bugs and Limitations
 * Inline tabs will not be ignored in commands
 ```bash
 $ ls -a \t\t\t -a
