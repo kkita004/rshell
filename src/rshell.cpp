@@ -238,7 +238,7 @@ void rshell_loop () {
             }
             */
 
-            // Buffer only holds 1000 commands of 1000 characters each
+            // Buffer only holds 1000 commands total;
             // Any longer will cause errors
             const char* args[1000];
             // Clear buffer
