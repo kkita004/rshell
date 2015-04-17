@@ -1,5 +1,5 @@
 CXX = g++
-CXXFLAGS = -Wall -Werror -ansi -pedantic
+CXXFLAGS = -Wall -Werror -std=c++0x -pedantic
 OBJ = rshell.o
 
 all: $(OBJ)
