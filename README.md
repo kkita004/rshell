@@ -9,19 +9,23 @@ make
 
 ## Features
 * Supports up to 1000 chained commands in a single entry
+* Includes login and hostname in prompt
+```bash
+kkita004@hammer.cs.ucr.edu $
+```
 * Automatically trims tabs (at beginning and end of input) and excess spaces (at all parts) from commands
 ```bash
-$               ls                                   -a             -a;
+kkita004@hammer.cs.ucr.edu $               ls                                   -a             -a;
 ```
 becomes
 ```bash
-$ ls -a -a;
+kkita004@hammer.cs.ucr.edu $ ls -a -a;
 ```
 * Supports both single and double quotes
 ```bash
-$ echo "This sentence will be output."
+kkita004@hammer.cs.ucr.edu $ echo "This sentence will be output."
 This sentence will be output.
-$ echo "The ; && and || will be ignored while in these quotes."
+kkita004@hammer.cs.ucr.edu $ echo "The ; && and || will be ignored while in these quotes."
 The ; && and || will be ignored while in these quotes.
 ```
 An error will be detected if quotes are left unclosed.
@@ -30,7 +34,7 @@ An error will be detected if quotes are left unclosed.
 
 * If an empty command is entered, it will stop the remaining chain of commands from working
 ```bash
-$ echo testing &&     ; echo "will not appear"
+kkita004@hammer.cs.ucr.edu $ echo testing &&     ; echo "will not appear"
 testing
 ```
 
@@ -41,7 +45,7 @@ Uses `C++11` features.
 ## Known Bugs and Limitations
 * Inline tabs will not be ignored in commands
 ```bash
-$ ls -a \t\t\t -a
+kkita004@hammer.cs.ucr.edu $ ls -a \t\t\t -a
 : invalid option -- ' '
 Try 'ls --help' for more information.
 ```
