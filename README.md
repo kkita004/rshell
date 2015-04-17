@@ -34,6 +34,7 @@ $ ls -l; echo testing &&     ; echo "will not appear"
 
 ## Dependencies
 Uses the [`boost`](https://www.boost.org) library for trimming and tokenizing.
+Uses `C++11` features.
 
 ## Known Bugs
 * Inline tabs will not be ignored in commands

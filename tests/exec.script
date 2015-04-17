@@ -1,0 +1,108 @@
+Script started on Fri 17 Apr 2015 01:59:44 AM PDT
+~
+kkita004@hammer $ cd repo/rshell
+~/repo/rshell
+kkita004@hammer $ ./bin/rshell
+
+kkita004@hammer.cs.ucr.edu$ # test cases for part 1
+kkita004@hammer.cs.ucr.edu$ ls 
+bin  LICENSE  Makefile	README.md  src	tests
+kkita004@hammer.cs.ucr.edu$ ls -a
+.  ..  bin  .git  LICENSE  Makefile  README.md	src  tests
+kkita004@hammer.cs.ucr.edu$ echo a b c
+a b c
+kkita004@hammer.cs.ucr.edu$ echo 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20
+1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20
+kkita004@hammer.cs.ucr.edu$ ls -a -a -a -a -a -a -a -a -a -a
+.  ..  bin  .git  LICENSE  Makefile  README.md	src  tests
+kkita004@hammer.cs.ucr.edu$ # running a command in both ./bin and current directory
+kkita004@hammer.cs.ucr.edu$ ls; ./bin/rshell #calling rshell within rshell
+bin  LICENSE  Makefile	README.md  src	tests
+
+kkita004@hammer.cs.ucr.edu$ exit # exiting second rshell
+kkita004@hammer.cs.ucr.edu$ nonexistentprogram # should result in error
+Command error: No such file or directory
+kkita004@hammer.cs.ucr.edu$                      echo             a          b cc    ;
+a b cc
+kkita004@hammer.cs.ucr.edu$ # test cases for part 2
+kkita004@hammer.cs.ucr.edu$ true && echo "this should output"
+this should output
+kkita004@hammer.cs.ucr.edu$ false && echo "this should not output"
+kkita004@hammer.cs.ucr.edu$ true || echo "this should not output"
+kkita004@hammer.cs.ucr.edu$ false || echo "this should output"
+this should output
+kkita004@hammer.cs.ucr.edu$ true&&false&&echo "no output here"
+kkita004@hammer.cs.ucr.edu$ true&&false||false||true&&true&&echo "test" && ls "nonexistentfolder"||true&&true&&false||echo "this should output"
+test
+ls: cannot access nonexistentfolder: No such file or directory
+this should output
+kkita004@hammer.cs.ucr.edu$ echo "run the next one"; echo "run the nextone too"; true && true&&false|| c echo "run this "; echo "all done";
+run the next one
+run the nextone too
+run this
+all done
+kkita004@hammer.cs.ucr.edu$ ls -l &&      ls -a &&   echo "still works; ";
+total 24
+drwx------ 2 kkita004 csmajs 4096 Apr 17 01:08 bin
+-rw------- 1 kkita004 csmajs  427 Apr 12 17:58 LICENSE
+-rw------- 1 kkita004 csmajs  242 Apr 17 00:12 Makefile
+-rw------- 1 kkita004 csmajs 1227 Apr 17 01:10 README.md
+drwx------ 2 kkita004 csmajs 4096 Apr 17 01:08 src
+drwx------ 2 kkita004 csmajs 4096 Apr 17 01:54 tests
+.  ..  bin  .git  LICENSE  Makefile  README.md	src  tests
+still works
+kkita004@hammer.cs.ucr.edu$ # test cases for part 3
+kkita004@hammer.cs.ucr.edu$ ./bin/rshell # second rshell
+
+kkita004@hammer.cs.ucr.edu$ exit #exiting second rshell
+kkita004@hammer.cs.ucr.edu$ ./bin/rshell # second rshell
+
+kkita004@hammer.cs.ucr.edu$ exit -a -s -d f # still exits 
+kkita004@hammer.cs.ucr.edu$ ls -l exit # doesn't exit rshell
+ls: cannot access exit: No such file or directory
+kkita004@hammer.cs.ucr.edu$ ./bin/rshell
+
+kkita004@hammer.cs.ucr.edu$ ls -a; exit; # this will exit rshell
+.  ..  bin  .git  LICENSE  Makefile  README.md	src  tests
+kkita004@hammer.cs.ucr.edu$ # test cases for part 4
+kkita004@hammer.cs.ucr.edu$ ls -a # this is a comment
+.  ..  bin  .git  LICENSE  Makefile  README.md	src  tests
+kkita004@hammer.cs.ucr.edu$ #
+kkita004@hammer.cs.ucr.edu$ ##
+kkita004@hammer.cs.ucr.edu$    ###
+kkita004@hammer.cs.ucr.edu$        # # # #
+kkita004@hammer.cs.ucr.edu$ echo test#only test will appear
+test
+kkita004@hammer.cs.ucr.edu$ # extra test cases
+kkita004@hammer.cs.ucr.edu$ # testing quotation marks
+kkita004@hammer.cs.ucr.edu$ ls "happy birthday"
+ls: cannot access happy birthday: No such file or directory
+kkita004@hammer.cs.ucr.edu$ ls 'happy birthday'
+ls: cannot access happy birthday: No such file or directory
+kkita004@hammer.cs.ucr.edu$ ls "unfinished double"  # should not work
+error: no closing double quotation found
+kkita004@hammer.cs.ucr.edu$ ls 'unfinished single # should not work either
+error: no closing single quotation found
+kkita004@hammer.cs.ucr.edu$ echo "ignore this &&"; echo "ignore this ||"; echo "ignore this ' ;";
+ignore this &&
+ignore this ||
+ignore this ;
+kkita004@hammer.cs.ucr.edu$ # Known Bug: tab characters inside a function will cause problems
+kkita004@hammer.cs.ucr.edu$ ls -a			-a
+ls: invalid option -- '	'
+Try `ls --help' for more information.
+kkita004@hammer.cs.ucr.edu$ # empty command is ignored if it is by itself
+kkita004@hammer.cs.ucr.edu$ 
+kkita004@hammer.cs.ucr.edu$   
+kkita004@hammer.cs.ucr.edu$    
+kkita004@hammer.cs.ucr.edu$ # empty commands in a chain of commands will stop the rest of the chain
+kkita004@hammer.cs.ucr.edu$ echo "im here" && echo "me too" &&      ; echo "im not"
+im here
+me too
+kkita004@hammer.cs.ucr.edu$ # test cases finished, exiting
+kkita004@hammer.cs.ucr.edu$ exit
+~/repo/rshell
+kkita004@hammer $ exit
+exit
+
+Script done on Fri 17 Apr 2015 02:06:34 AM PDT
