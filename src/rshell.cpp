@@ -97,6 +97,33 @@ std::string check_connector(std::string s, int* con) {
 }
 
 
+
+void parse_args(std::string s, std::vector<std::string>& v, int * connector) {
+    using namespace boost;
+    std::string curr_str = s;
+    trim(curr_str);
+    curr_str = check_connector(curr_str, connector);
+
+    // Empty, return error
+    if (curr_str.size() == 0) {
+        v.clear();
+        return;
+    }
+
+    tokenizer<escaped_list_separator<char> > t(
+            curr_str,
+            escaped_list_separator<char>("\\", " ", "\"\'"));
+    for (
+            tokenizer<escaped_list_separator<char> >::iterator i
+            = t.begin();
+            i != t.end(); ++i) {
+        v.push_back(*i);
+     }
+}
+
+
+
+
 /* Takes string and returns pointers to char* of program,
  * char** of arguments in program,
  * int* to return connector
@@ -140,6 +167,8 @@ unsigned return_command(std::string s, char*& prog, char**& args, int* connector
         v.push_back(*i);
 
     }
+    std::cout << "adding null char " << std::endl;
+
 
 
     // Take command name
@@ -156,13 +185,13 @@ unsigned return_command(std::string s, char*& prog, char**& args, int* connector
     char ** arguments;
     if (v.size() - 1 > 0) {
 
-        arguments = new char*[v.size() - 1];
+        arguments = new char*[v.size()];
 
         //std::cout << "Converting strings to arguments" << std::endl;
-        for (unsigned i = 1; i < v.size(); ++i) {
+        for (unsigned i = 0; i < v.size(); ++i) {
             char * cstr = new char [v.at(i).size() + 1];
             std::strcpy(cstr, v.at(i).c_str());
-            arguments[i-1] = cstr;
+            arguments[i] = cstr;
         }
 
         // Output char array
@@ -176,6 +205,7 @@ unsigned return_command(std::string s, char*& prog, char**& args, int* connector
         //}
         args = arguments;
     }
+
     /*
     // program only, no arguments passed in
     if (curr_str.find(' ') == std::string::npos) {
@@ -211,7 +241,7 @@ unsigned return_command(std::string s, char*& prog, char**& args, int* connector
        std::cin.get();
        };*/
     //std::cout << "exiting function" << std::endl;
-    return v.size() - 1;
+    return v.size();
 }
 
 
@@ -326,37 +356,101 @@ void rshell_loop () {
     std::string input_s;
     std::cout << std::endl;
 
-
     char e[] = {"exit"};
 
     while(1) {
         std::cout << "$ ";
         getline(std::cin, input_s);
+        // Empty input
+        boost::trim(input_s);
+        if (input_s == "") continue;
         int pid;
         int i = 0;
-        int c = 0;
-        while ((unsigned) i < input_s.size() && i >= 0) {
-            char * prog = 0;
-            char ** args = 0;
-            std::string parse = parse_string(input_s, &i);
 
-            unsigned args_num = return_command(parse, prog, args, &c);
+        while ((unsigned) i < input_s.size() && i >= 0) {
+            std::vector<std::string> v;
+            //char * prog = 0;
+            //char ** args = 0;
+            int c = 0;
+            std::string parse = parse_string(input_s, &i);
+            parse_args(parse, v, &c);
+            /*
+            for (unsigned b = 0; b < v.size(); ++b) {
+                std::cout << "VECTOR[" << b << "]:" << v.at(b) << std::endl;
+            }*/
+
+            //unsigned args_num = return_command(parse, prog, args, &c);
+
+            // TODO: Move dynamic allocation to this function
+
+            /*
+            unsigned n = 0;
+            while (prog[n] != '\0') {
+                std::cout << prog[n];
+                n++;
+            }
+            std::cout << std::endl;
+            */
+            //std::cout << "outputting " << args_num << " arguments: " << std::endl;
+            /*
+            for (unsigned j = 0; j < args_num; ++j) {
+                unsigned k = 0;
+                if (args == 0) {
+                    continue;
+                }
+                std::cout << "ARG[" << j << "]:";
+                while (args[j][k] != '\0') {
+                    std::cout << args[j][k];
+                    k++;
+                }
+                std::cout << std::endl;
+            }*/
+
+            // Buffer only holds 1000 commands of 1000 characters each
+            // Any longer will cause errors
+            const char* args[1000];
+            // Clear buffer
+            for (unsigned i = v.size(); i < 1000 - v.size(); ++i) {
+                args[i] = '\0';
+            }
+            for (unsigned j = 0; j < v.size(); ++j) {
+                const char * p = v.at(j).c_str();
+                args[j] = p;
+            }
+            /*
+            for (unsigned k = 0; k < 10; ++k) {
+                if (args[k] == 0) break;
+                unsigned n = 0;
+                std::cout << "A[" << k << "]:[";
+                while (args[k][n] != '\0')  {
+                    std::cout << args[k][n];
+                    n++;
+                }
+                std::cout << "]" << std::endl;
+            }*/
 
             // If command is exit
-            if (!strcmp(e, prog)) {
-                free_char(prog, args, args_num);
+            if (v.size() == 0) {
+                //std::cerr << "Error: No Command Given" << std::endl;
+                break;
+            }
+            if (!strcmp(e, args[0])) {
+                //std::cout << "exiting" << std::endl;
+                //free_char(prog, args, args_num);
                 std::exit(1);
             }
 
             pid = fork();
             // Something went wrong
             if (pid == -1) {
-                perror("fork error");
+                perror("Fork error");
                 exit(1);
             }
             // Child Process
             else if (pid == 0) {
-                execvp(prog, args);
+                //std::cout << "arg count: " << args_num << std::endl;
+                execvp(args[0], (char * const *) args);
+                perror("Command error");
             }
             // Parent Process
             else if (pid > 0) {
@@ -375,14 +469,15 @@ void rshell_loop () {
                             // connector is ||, expected failure,
                             // received success
                             // break
-                            free_char(prog, args, args_num);
+                           // free_char(prog, args, args_num);
                             break;
                         }
                     }
                     if (status != 0) {
                         // return value is false;
                         if (c == 1) {
-                            free_char(prog, args, args_num);
+
+                           // free_char(prog, args, args_num);
                             break;
                         }
                     }
@@ -391,7 +486,8 @@ void rshell_loop () {
             }
 
             // Deallocate char arrays
-            free_char(prog, args, args_num);
+            //std::cout << "deallocating char arrays" << std::endl;
+            //free_char(prog, args, args_num);
         }
     }
     return;
