@@ -194,9 +194,27 @@ void rshell_loop () {
     std::cout << std::endl;
 
     char e[] = {"exit"};
+    std::string prompt;
+
+    // Setup prompt
+    // Login and hostname limit is 256, otherwise truncated
+    char login[256];
+    if (getlogin_r(login, sizeof login)) {
+        login[0] = '\0';
+    }
+    char hostname[256];
+    if (gethostname(hostname, sizeof hostname)) {
+        hostname[0] = '\0';
+    }
+
 
     while(1) {
-        std::cout << "$ ";
+        if (login[0] != '\0' || hostname[0] != '\0') {
+            printf("%s@%s$ ", login, hostname);
+        } else {
+            printf("$ ");
+
+        }
         getline(std::cin, input_s);
         // Empty input
         boost::trim(input_s);
