@@ -8,8 +8,8 @@ make
 ```
 
 ## Features
-*. Supports up to 1000 chained commands in a single entry
-*. Automatically trims tabs (at beginning and end of input) and excess spaces (at all parts) from commands
+* Supports up to 1000 chained commands in a single entry
+* Automatically trims tabs (at beginning and end of input) and excess spaces (at all parts) from commands
 ```bash
 $               ls                                   -a             -a;
 ```
@@ -26,9 +26,12 @@ The ; && and || will be ignored while in these quotes.
 ```
 An error will be detected if quotes are left unclosed.
 
-* If an empty command is entered, it will stop the entire chain of commands.
+* Empty input is ignored
+
+* If an empty command is entered, it will stop the remaining chain of commands from working
 ```bash
-$ ls -l; echo testing &&     ; echo "will not appear"
+$ echo testing &&     ; echo "will not appear"
+testing
 ```
 
 ## Dependencies
