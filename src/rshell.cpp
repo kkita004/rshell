@@ -79,7 +79,7 @@ void parse_args(std::string s, std::vector<std::string>& v, int * connector) {
         boost::trim(temp);
         boost::trim_if(temp, boost::is_any_of("\t"));
         if (temp != "") v.push_back(temp);
-     }
+    }
 }
 
 /* Parses string, returns substring of first command,
@@ -233,10 +233,10 @@ void rshell_loop () {
             parse_args(parse, v, &c);
 
             /*
-            for (unsigned b = 0; b < v.size(); ++b) {
-                std::cout << "VECTOR[" << b << "]:[" << v.at(b) << "]" << std::endl;
-            }
-            */
+               for (unsigned b = 0; b < v.size(); ++b) {
+               std::cout << "VECTOR[" << b << "]:[" << v.at(b) << "]" << std::endl;
+               }
+               */
 
             // Buffer only holds 1000 commands total;
             // Any longer will cause errors
