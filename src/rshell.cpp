@@ -232,10 +232,11 @@ void rshell_loop () {
             if (i < 0) break;
             parse_args(parse, v, &c);
 
-
+            /*
             for (unsigned b = 0; b < v.size(); ++b) {
                 std::cout << "VECTOR[" << b << "]:[" << v.at(b) << "]" << std::endl;
             }
+            */
 
             // Buffer only holds 1000 commands of 1000 characters each
             // Any longer will cause errors
@@ -267,7 +268,7 @@ void rshell_loop () {
             else if (pid == 0) {
                 execvp(args[0], (char * const *) args);
                 perror("Command error");
-                exit(1);
+                _exit(1);
             }
             // Parent Process
             else if (pid > 0) {
