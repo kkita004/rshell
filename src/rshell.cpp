@@ -263,6 +263,8 @@ void rshell_loop () {
             if (pid == -1) {
                 perror("Fork error");
                 exit(1);
+                // If for some reason there's an error in exit();
+                perror("exit error");
             }
             // Child Process
             else if (pid == 0) {
