@@ -101,7 +101,7 @@ std::string check_connector(std::string s, int* con) {
 void parse_args(std::string s, std::vector<std::string>& v, int * connector) {
     using namespace boost;
     std::string curr_str = s;
-    trim(curr_str);
+    boost::trim(curr_str);
     curr_str = check_connector(curr_str, connector);
 
     // Empty, return error
@@ -117,7 +117,11 @@ void parse_args(std::string s, std::vector<std::string>& v, int * connector) {
             tokenizer<escaped_list_separator<char> >::iterator i
             = t.begin();
             i != t.end(); ++i) {
-        v.push_back(*i);
+        std::string temp = *i;
+        // Remove white space and tabs
+        boost::trim(temp);
+        boost::trim_if(temp, boost::is_any_of("\t"));
+        if (temp != "") v.push_back(temp);
      }
 }
 
@@ -167,7 +171,7 @@ unsigned return_command(std::string s, char*& prog, char**& args, int* connector
         v.push_back(*i);
 
     }
-    std::cout << "adding null char " << std::endl;
+//    std::cout << "adding null char " << std::endl;
 
 
 
@@ -374,14 +378,13 @@ void rshell_loop () {
             int c = 0;
             std::string parse = parse_string(input_s, &i);
             parse_args(parse, v, &c);
+
             /*
             for (unsigned b = 0; b < v.size(); ++b) {
-                std::cout << "VECTOR[" << b << "]:" << v.at(b) << std::endl;
-            }*/
+                std::cout << "VECTOR[" << b << "]:[" << v.at(b) << "]" << std::endl;
+            } */
 
             //unsigned args_num = return_command(parse, prog, args, &c);
-
-            // TODO: Move dynamic allocation to this function
 
             /*
             unsigned n = 0;
