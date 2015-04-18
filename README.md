@@ -53,3 +53,10 @@ Try 'ls --help' for more information.
 * Cannot handle hostnames or login names that are longer than 256 characters.
 
 * Does not currently handle input/output redirection or piping
+
+* Does not support escaped quotes
+```bash
+echo 'You're it!';
+error: no closing single quotation found
+```
+
