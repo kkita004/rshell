@@ -54,7 +54,7 @@ Try 'ls --help' for more information.
 
 * Does not currently handle input/output redirection or piping
 
-* Does not support escaped quotes
+* Does not support single quotes within quotes
 ```bash
 echo 'You're it!';
 error: no closing single quotation found
