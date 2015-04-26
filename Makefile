@@ -8,6 +8,12 @@ all: $(OBJ)
 	$(CXX) ls.o -o bin/ls
 	-@rm *.o 2>/dev/null || true
 
+debugls: src/ls.cpp
+	@mkdir -p bin
+	$(CXX) $(CXXFLAGS) -c -g src/ls.cpp
+	$(CXX) ls.o -g -o bin/ls
+	-@rm *.o 2>/dev/null || true
+
 rshell.o: src/rshell.cpp
 	$(CXX) $(CXXFLAGS) -c src/rshell.cpp
 
