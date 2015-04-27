@@ -9,7 +9,8 @@ all: $(OBJ)
 
 rshell.o: src/rshell.cpp
 	$(CXX) $(CXXFLAGS) -c src/rshell.cpp
-
+cp.o: src/cp.cpp
+	$(CXX) $(CXXFLAGS) -c src/cp.cpp
 clean:
 	rm -r bin
 
