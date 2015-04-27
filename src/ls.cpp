@@ -121,6 +121,14 @@ void parsemanager(std::vector<std::string> args, uint8_t flags, std::vector<dirc
         fs.push_back(dirc());
         parsedirec(args.at(i), flags, fs.at(i).files, fs.at(i).dirs);
         fs.at(i).name = args.at(i);
+
+        // Recursive enabled
+        if (flags & 0x02) {
+            for (unsigned j = 0; j < fs.at(i).dirs.size(); ++j) {
+                args.push_back(fs.at(i).name + "/" + fs.at(i).dirs.at(j));
+            }
+        }
+        std::sort(args.begin(), args.end(), caseincomp);
     }
 }
 
@@ -146,9 +154,8 @@ int main(int argc, char **argv) {
        for (unsigned i =0; i < files.size(); ++i) {
        std::cout << files.at(i) << std::endl;
        }
-       */
+    */
 
-    // Skip first element, it contains the folder name
     for (unsigned i = 0; i < fs.size(); ++i) {
         if (fs.size() > 1) {
             std::cout << fs.at(i).name << ":" << std::endl;
@@ -156,8 +163,7 @@ int main(int argc, char **argv) {
         for (auto it = fs.at(i).files.begin(); it != fs.at(i).files.end(); ++it) {
             std::cout << *it << "  ";
         }
-        std::cout << std::endl;
-        if (i + 1 < fs.size()) std::cout << std::endl;
+        if (i + 1 < fs.size()) std::cout << std::endl << std::endl;
     }
 
     return 0;
