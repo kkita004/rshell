@@ -39,15 +39,17 @@ bool caseincomp(std::string s1, std::string s2) {
 }
 
 void parsedirec(std::vector<std::string>& args, uint8_t flags,
-                                    std::vector<std::string>& files)
-                                    {
+                std::vector<std::string>& files,
+                std::vector<std::string>& dirs) {
+
     // If no other arguments are passed in, only use current directory
     //std::vector<std::string> files;
     //std::vector<std::string> dirs;
-    if (args.size() == 0) args.push_back(".");
+    if (args.size() == 0) files.push_back(".");
+    else {files = args;}
 
     DIR* dirp;
-    if (NULL == (dirp = opendir(args.at(0).c_str()))) {
+    if (NULL == (dirp = opendir(files.at(0).c_str()))) {
         perror("opendir");
         exit(1);
     }
@@ -56,24 +58,34 @@ void parsedirec(std::vector<std::string>& args, uint8_t flags,
     errno = 0;
     // Read in file objects
     while (NULL != (filespecs = readdir(dirp))) {
+        // Must keep path of file, otherwise won't find
         std::string str(filespecs->d_name);
+        std::string path = files.at(0);
+        std::string full = path + "/" + str;
+        //std::cout << full << std::endl;
+
         // If -a flag is not enabled, skip hidden files
         if (!(flags & 0x01)) {
             if (filespecs->d_name[0] == '.') continue;
         }
         // Check if directory or not
-        /*
+
         struct stat dstat;
-        if (stat(filespecs->d_name, &dstat)) {
+        //std::cout << filespecs->d_name << std::endl;
+        // Keep track of directories
+        //if (stat(filespecs->d_name, &dstat) == 0 && S_ISDIR(dstat.st_mode)) {
+        //    dirs.push_back(str);
+        //}
+
+        if (stat(full.c_str(), &dstat)) {
             perror("stat");
             exit(1);
         }
-
         if (S_ISDIR(dstat.st_mode)) {
             dirs.push_back(str);
 
-        } else {
-        */
+        }
+
         files.push_back(str);
         //std::cout << filespecs->d_name << " ";
 
@@ -86,8 +98,8 @@ void parsedirec(std::vector<std::string>& args, uint8_t flags,
         perror("closedir");
         exit(1);
     }
-    std::sort(files.begin(), files.end(), caseincomp);
-    //std::sort(dirs.begin(), dirs.end());
+    std::sort(files.begin() + 1, files.end(), caseincomp);
+    std::sort(dirs.begin(), dirs.end());
 }
 
 
@@ -100,18 +112,25 @@ int main(int argc, char **argv) {
     if (flags & 0x01) std::cout << "Flag -a enabled" << std::endl;
     if (flags & 0x02) std::cout << "Flag -R enabled" << std::endl;
     if (flags & 0x04) std::cout << "Flag -l enabled" << std::endl;
+    //std::copy(args.begin(), args.end(), std::ostream_iterator<std::string>(std::cout, "\n"));
 
     std::vector<std::string> files;
+    std::vector<std::string> dirs;
 
-    parsedirec(args, flags, files);
+    parsedirec(args, flags, files, dirs);
+/*
+    for (unsigned i =0; i < files.size(); ++i) {
+        std::cout << files.at(i) << std::endl;
+    }
+    */
 
-    for (auto it = files.begin(); it != files.end(); ++it) {
-        std::cout << *it << ' ';
+    // Skip first element, it contains the folder name
+    for (auto it = files.begin() + 1; it != files.end(); ++it) {
+        std::cout << *it << "  ";
     }
     std::cout << std::endl;
 
 
-    //std::copy(args.begin(), args.end(), std::ostream_iterator<std::string>(std::cout, "\n"));
 
     return 0;
 }
