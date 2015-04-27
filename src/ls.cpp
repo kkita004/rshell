@@ -14,6 +14,17 @@
 #include <boost/algorithm/string.hpp>
 
 
+
+
+// Struct dirc holds name of directory,
+// files in directory, and which ones are dirs
+struct dirc {
+    std::string name;
+    std::vector<std::string> files;
+    std::vector<std::string> dirs;
+};
+
+
 // Parses input to find flags argument, returns enabled flags
 // Will erase any argument starting with a '-' character
 uint8_t getFlags(std::vector<std::string>& args) {
@@ -26,7 +37,7 @@ uint8_t getFlags(std::vector<std::string>& args) {
             if ((*it).find('l')!=std::string::npos) flags = flags | 0x04;
             it = args.erase(it);
         } else {
-          ++it;
+            ++it;
         }
     }
     return flags;
@@ -38,18 +49,22 @@ bool caseincomp(std::string s1, std::string s2) {
     return boost::to_upper_copy(s1) < boost::to_upper_copy(s2);
 }
 
-void parsedirec(std::vector<std::string>& args, uint8_t flags,
-                std::vector<std::string>& files,
-                std::vector<std::string>& dirs) {
+
+// Looks through given directory, returns list of files and
+// directories in files
+// Returns name of directory
+void parsedirec(std::string arg, uint8_t flags,
+        std::vector<std::string>& files,
+        std::vector<std::string>& dirs) {
 
     // If no other arguments are passed in, only use current directory
     //std::vector<std::string> files;
     //std::vector<std::string> dirs;
-    if (args.size() == 0) files.push_back(".");
-    else {files = args;}
+    //if (args.size() == 0) files.push_back(".");
+    //else {files = args;}
 
     DIR* dirp;
-    if (NULL == (dirp = opendir(files.at(0).c_str()))) {
+    if (NULL == (dirp = opendir(arg.c_str()))) {
         perror("opendir");
         exit(1);
     }
@@ -60,8 +75,7 @@ void parsedirec(std::vector<std::string>& args, uint8_t flags,
     while (NULL != (filespecs = readdir(dirp))) {
         // Must keep path of file, otherwise won't find
         std::string str(filespecs->d_name);
-        std::string path = files.at(0);
-        std::string full = path + "/" + str;
+        std::string full = arg + "/" + str;
         //std::cout << full << std::endl;
 
         // If -a flag is not enabled, skip hidden files
@@ -83,9 +97,7 @@ void parsedirec(std::vector<std::string>& args, uint8_t flags,
         }
         if (S_ISDIR(dstat.st_mode)) {
             dirs.push_back(str);
-
         }
-
         files.push_back(str);
         //std::cout << filespecs->d_name << " ";
 
@@ -98,39 +110,55 @@ void parsedirec(std::vector<std::string>& args, uint8_t flags,
         perror("closedir");
         exit(1);
     }
-    std::sort(files.begin() + 1, files.end(), caseincomp);
+    std::sort(files.begin(), files.end(), caseincomp);
     std::sort(dirs.begin(), dirs.end());
 }
 
+// Manages passing in directories
+void parsemanager(std::vector<std::string> args, uint8_t flags, std::vector<dirc>& fs) {
+    if (args.size() == 0) args.push_back(".");
+    for (unsigned i = 0; i < args.size(); ++i) {
+        fs.push_back(dirc());
+        parsedirec(args.at(i), flags, fs.at(i).files, fs.at(i).dirs);
+        fs.at(i).name = args.at(i);
+    }
+}
 
 int main(int argc, char **argv) {
     std::vector<std::string> args(argv, argv + argc);
     // Remove actual ls program command from argument vector
     args.erase(args.begin());
     uint8_t flags = getFlags(args);
+    std::sort(args.begin(), args.end(), caseincomp);
 
     if (flags & 0x01) std::cout << "Flag -a enabled" << std::endl;
     if (flags & 0x02) std::cout << "Flag -R enabled" << std::endl;
     if (flags & 0x04) std::cout << "Flag -l enabled" << std::endl;
     //std::copy(args.begin(), args.end(), std::ostream_iterator<std::string>(std::cout, "\n"));
 
-    std::vector<std::string> files;
-    std::vector<std::string> dirs;
+    //std::vector<std::string> files;
+    //std::vector<std::string> dirs;
+    std::vector<dirc> fs;
 
-    parsedirec(args, flags, files, dirs);
-/*
-    for (unsigned i =0; i < files.size(); ++i) {
-        std::cout << files.at(i) << std::endl;
-    }
-    */
+    parsemanager(args, flags, fs);
+    //parsedirec(args, flags, files, dirs);
+    /*
+       for (unsigned i =0; i < files.size(); ++i) {
+       std::cout << files.at(i) << std::endl;
+       }
+       */
 
     // Skip first element, it contains the folder name
-    for (auto it = files.begin() + 1; it != files.end(); ++it) {
-        std::cout << *it << "  ";
+    for (unsigned i = 0; i < fs.size(); ++i) {
+        if (fs.size() > 1) {
+            std::cout << fs.at(i).name << ":" << std::endl;
+        }
+        for (auto it = fs.at(i).files.begin(); it != fs.at(i).files.end(); ++it) {
+            std::cout << *it << "  ";
+        }
+        std::cout << std::endl;
+        if (i + 1 < fs.size()) std::cout << std::endl;
     }
-    std::cout << std::endl;
-
-
 
     return 0;
 }
