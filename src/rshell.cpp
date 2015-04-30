@@ -4,6 +4,7 @@
 #include <sstream>
 #include <algorithm>
 #include <cstring>
+#include <pwd.h>
 
 // fork()
 #include <unistd.h>
@@ -198,20 +199,22 @@ void rshell_loop () {
 
     // Setup prompt
     // Login and hostname limit is 256, otherwise truncated
-    char login[256];
-    if (getlogin_r(login, sizeof login)) {
+    char *login;
+    struct passwd *pwd;
+    if (!(pwd = getpwuid(getuid()))) {
         perror("getlogin error");
-        login[0] = '\0';
+    } else {
+        login = pwd->pw_name;
     }
+
     char hostname[256];
     if (gethostname(hostname, sizeof hostname)) {
         perror("gethostname error");
         hostname[0] = '\0';
     }
 
-
     while(1) {
-        if (login[0] != '\0' || hostname[0] != '\0') {
+        if (!pwd || hostname[0] != '\0') {
             printf("%s@%s$ ", login, hostname);
         } else {
             printf("$ ");
