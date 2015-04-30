@@ -214,7 +214,7 @@ void rshell_loop () {
     }
 
     while(1) {
-        if (!pwd || hostname[0] != '\0') {
+        if ((pwd && pwd->pw_name) || hostname[0] != '\0') {
             printf("%s@%s$ ", login, hostname);
         } else {
             printf("$ ");
