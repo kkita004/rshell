@@ -6,6 +6,7 @@
 #include <cstdlib>
 #include <algorithm>
 #include <cctype>
+#include <time.h>
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -158,6 +159,8 @@ void parsemanager(std::vector<std::string> args, uint8_t flags, std::vector<dirc
     }
 }
 
+
+// Returns filemode character
 std::string filemode (mode_t m) {
     // Is this even necessary
     if (!m) return "-";
@@ -172,21 +175,70 @@ std::string filemode (mode_t m) {
     return "-";
 }
 
+
+// Returns File permissions
+std::string permissions(mode_t m) {
+    std::string s;
+    if (S_IRUSR & m) s.append("r");
+    else s.append("-");
+    if (S_IWUSR & m) s.append("w");
+    else s.append("-");
+    if (S_IXUSR & m) s.append("x");
+    else s.append("-");
+
+    if (S_IRGRP & m) s.append("r");
+    else s.append("-");
+    if (S_IWGRP & m) s.append("w");
+    else s.append("-");
+    if (S_IXGRP & m) s.append("x");
+    else s.append("-");
+
+    if (S_IROTH & m) s.append("r");
+    else s.append("-");
+    if (S_IWOTH & m) s.append("w");
+    else s.append("-");
+    if (S_IXOTH & m) s.append("x");
+    else s.append("-");
+
+    return s;
+}
+
+std::string timetostring(time_t t) {
+    struct tm * ti;
+    ti = localtime(&t);
+
+    char buffer[80];
+    strftime(buffer, 80, "%h %e %R", ti);
+    std::string s(buffer);
+    boost::trim(s);
+    return s;
+}
+
+
 // Get file details
 // Take in directory, return string with file details
 std::string filestats(std::string s) {
     struct stat st;
     if (-1 == stat(s.c_str(), &st)) {
         perror("stat");
+        return "";
     }
 
     std::string r;
 
     r.append(filemode(st.st_mode));
-
-
-
-
+    r.append(permissions(st.st_mode));
+    r.append(" ");
+    r.append(std::to_string((int)st.st_nlink));
+    r.append(" ");
+    r.append(std::to_string(st.st_uid));
+    r.append(" ");
+    r.append(std::to_string(st.st_gid));
+    r.append(" ");
+    r.append(std::to_string(st.st_size));
+    r.append(" ");
+    r.append(timetostring(st.st_mtime));
+    r.append(" ");
 
     return r;
 
@@ -221,7 +273,10 @@ int main(int argc, char **argv) {
             std::cout << fs.at(i).name << ":" << std::endl;
         }
         for (auto it = fs.at(i).files.begin(); it != fs.at(i).files.end(); ++it) {
-            std::cout << *it << "  ";
+            if (flags & 0x04) {
+                std::cout << filestats(*it) << " " << *it << std::endl;
+            }
+            else std::cout << *it << "  ";
         }
         std::cout << std::endl;
         if (i + 1 < fs.size()) std::cout << std::endl;
