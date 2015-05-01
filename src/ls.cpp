@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <cctype>
 #include <time.h>
+#include <stdio.h>
 
 #include <pwd.h>
 #include <grp.h>
@@ -210,21 +211,21 @@ std::string timetostring(time_t& t) {
     // Get Current Time now to decide whether to output
     // Year or Time
     time_t tnow;
-    //time(&tnow);
     time(&tnow);
-    struct tm* tnowinfo = localtime(&tnow);
+    struct tm tnowinfo;;
+    localtime_r(&tnow, &tnowinfo);
 
-    struct tm* ti = localtime(&t);
-    // ti = localtime(&t);
+    struct tm ti;
+    localtime_r(&t, &ti);
 
     char buffer[80];
 
     // If matches current year, output time
     // else output year instead
-    if (tnowinfo->tm_year == ti->tm_year) {
-        strftime(buffer, 80, "%h %e %R", ti);
+    if (tnowinfo.tm_year == ti.tm_year) {
+        strftime(buffer, 80, "%h %e %R", &ti);
     } else {
-        strftime(buffer, 80, "%h %e %Y", ti);
+        strftime(buffer, 80, "%h %e %Y", &ti);
     }
 
     std::string s(buffer);
