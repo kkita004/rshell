@@ -18,7 +18,7 @@
 
 #include <boost/algorithm/string.hpp>
 
-std::string filestats(std::string);
+std::string filestats(std::string, int& );
 
 
 // Struct dirc holds name of directory,
@@ -192,7 +192,7 @@ void parsemanager(std::vector<std::string> args, uint8_t flags, std::vector<dirc
                 //if (fs.at(i).dirs.at(j) == "." || fs.at(i).dirs.at(j) == "..") continue;
                 std::string path = fs.at(i).name + "/" + fs.at(i).files.at(j).first;
                 //std::cout << "path: " << path << std::endl;
-                fs.at(i).files.at(j).second = filestats(path);
+                fs.at(i).files.at(j).second = filestats(path,fs.at(i).blocksize);
 
             }
         }
@@ -211,8 +211,8 @@ void parsemanager(std::vector<std::string> args, uint8_t flags, std::vector<dirc
             }
         }
     }
-        // Make sure this is compatible with filestats
-        std::sort(args.begin(), args.end(), caseincomp);
+    // Make sure this is compatible with filestats
+    std::sort(args.begin(), args.end(), caseincomp);
 }
 
 
@@ -285,10 +285,9 @@ std::string timetostring(time_t& t) {
     return s;
 }
 
-
 // Get file details
 // Take in directory, return string with file details
-std::string filestats(std::string s) {
+std::string filestats(std::string s, int& blocksize) {
     struct stat st;
     if (-1 == stat(s.c_str(), &st)) {
         perror("stat not found");
@@ -321,9 +320,10 @@ std::string filestats(std::string s) {
     r.append(" ");
     r.append(timetostring(st.st_mtime));
     r.append(" ");
+    // Convert blocks to 1024
+    blocksize += st.st_blocks / 2; //ceil((st.st_size + 1) / 1024);
 
     return r;
-
 }
 
 int main(int argc, char **argv) {
@@ -354,6 +354,9 @@ int main(int argc, char **argv) {
         if (fs.size() > 1) {
             std::cout << fs.at(i).name << ":" << std::endl;
         }
+        if (flags & 0x04) {
+            std::cout << "total " << fs.at(i).blocksize << std::endl;
+        }
         for (auto it = fs.at(i).files.begin(); it != fs.at(i).files.end(); ++it) {
             if (flags & 0x04) {
             //    if (filestats((*it).second) == "") continue;
@@ -363,7 +366,7 @@ int main(int argc, char **argv) {
             else std::cout << (*it).first << "  ";
         }
         std::cout << std::endl;
-        if (i + 1 < fs.size()) std::cout << std::endl;
+        //if (i + 1 < fs.size()) std::cout << std::endl;
     }
 
     return 0;
