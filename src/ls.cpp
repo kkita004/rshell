@@ -46,6 +46,25 @@ uint8_t getFlags(std::vector<std::string>& args) {
 
 // Case insensitive string comparison
 bool caseincomp(std::string s1, std::string s2) {
+    // TODO: Fix sorting for ... directories
+    /*if (s1.length() < s2.length()) {
+        std::swap(s1, s2);
+    }
+    */
+    /*
+    while (s1.length() > 1 && s1.at(0) == '.') {
+        s1.erase(0,1);
+    }
+    while (s2.length() > 1 && s2.at(0) == '.') {
+        s2.erase(0,1);
+    }
+
+    */
+    /*
+    while (s1.length() > 1 && s2.length() > 1 && s1.at(0) == '.' && s2.at(0) == '.') {
+        s1.erase(0,1);
+        s2.erase(0,1);
+    } */
     return boost::to_upper_copy(s1) < boost::to_upper_copy(s2);
 }
 
@@ -64,14 +83,17 @@ void parsedirec(std::string arg, uint8_t flags,
     //else {files = args;}
 
     DIR* dirp;
+    // Couldn't open directory, might not exist
     if (NULL == (dirp = opendir(arg.c_str()))) {
         perror("opendir");
-        exit(1);
+        return;
+        //exit(1);
     }
     struct dirent *filespecs;
     //int result;
     errno = 0;
     // Read in file objects
+    // Call perror here too
     while (NULL != (filespecs = readdir(dirp))) {
         // Must keep path of file, otherwise won't find
         std::string str(filespecs->d_name);
@@ -95,6 +117,8 @@ void parsedirec(std::string arg, uint8_t flags,
             perror("stat");
             exit(1);
         }
+
+        // Might need to call perror here
         if (S_ISDIR(dstat.st_mode)) {
             dirs.push_back(str);
         }
@@ -125,11 +149,47 @@ void parsemanager(std::vector<std::string> args, uint8_t flags, std::vector<dirc
         // Recursive enabled
         if (flags & 0x02) {
             for (unsigned j = 0; j < fs.at(i).dirs.size(); ++j) {
+                // Skip . and .. files
+                if (fs.at(i).dirs.at(j) == "." || fs.at(i).dirs.at(j) == "..") continue;
                 args.push_back(fs.at(i).name + "/" + fs.at(i).dirs.at(j));
             }
         }
         std::sort(args.begin(), args.end(), caseincomp);
     }
+}
+
+std::string filemode (mode_t m) {
+    // Is this even necessary
+    if (!m) return "-";
+
+    if S_ISREG(m) return "-";
+    if S_ISDIR(m) return "d";
+    if S_ISCHR(m) return "c";
+    if S_ISBLK(m) return "b";
+    if S_ISFIFO(m) return "p";
+    if S_ISLNK(m) return "l";
+    if S_ISSOCK(m) return "s";
+    return "-";
+}
+
+// Get file details
+// Take in directory, return string with file details
+std::string filestats(std::string s) {
+    struct stat st;
+    if (-1 == stat(s.c_str(), &st)) {
+        perror("stat");
+    }
+
+    std::string r;
+
+    r.append(filemode(st.st_mode));
+
+
+
+
+
+    return r;
+
 }
 
 int main(int argc, char **argv) {
@@ -163,7 +223,8 @@ int main(int argc, char **argv) {
         for (auto it = fs.at(i).files.begin(); it != fs.at(i).files.end(); ++it) {
             std::cout << *it << "  ";
         }
-        if (i + 1 < fs.size()) std::cout << std::endl << std::endl;
+        std::cout << std::endl;
+        if (i + 1 < fs.size()) std::cout << std::endl;
     }
 
     return 0;
