@@ -18,14 +18,16 @@
 
 #include <boost/algorithm/string.hpp>
 
-
+std::string filestats(std::string);
 
 
 // Struct dirc holds name of directory,
 // files in directory, and which ones are dirs
+// also holds filestats
 struct dirc {
+    int blocksize = 0;
     std::string name;
-    std::vector<std::string> files;
+    std::vector<std::pair<std::string, std::string> > files;
     std::vector<std::string> dirs;
 };
 
@@ -37,9 +39,22 @@ uint8_t getFlags(std::vector<std::string>& args) {
     for (auto it = args.begin(); it != args.end(); ) {
         // Found options flags
         if ((*it).at(0) == '-') {
-            if ((*it).find('a')!=std::string::npos) flags = flags | 0x01;
-            if ((*it).find('R')!=std::string::npos) flags = flags | 0x02;
-            if ((*it).find('l')!=std::string::npos) flags = flags | 0x04;
+            while ((*it).find('a')!=std::string::npos) {
+                flags = flags | 0x01;
+                (*it).erase((*it).find('a'), 1);
+            }
+            while ((*it).find('R')!=std::string::npos) {
+                flags = flags | 0x02;
+                (*it).erase((*it).find('R'), 1);
+            }
+            while ((*it).find('l')!=std::string::npos) {
+                flags = flags | 0x04;
+                (*it).erase((*it).find('l'), 1);
+            }
+            if (!((*it) == "-")) {
+                std::cerr << "invalid option" << (*it) << std::endl;
+                exit(1);
+            }
             it = args.erase(it);
         } else {
             ++it;
@@ -50,12 +65,22 @@ uint8_t getFlags(std::vector<std::string>& args) {
 
 
 // Case insensitive string comparison
-bool caseincomp(std::string s1, std::string s2) {
+
+
+//bool caseincomp(std::string s1, std::string s2) { return true;
+//}
+
+bool paircaseincomp(const std::pair<std::string, std::string>& p1,
+                const std::pair<std::string, std::string>& p2) {
+    std::string s1 = p1.first;
+    std::string s2 = p2.first;
     // TODO: Fix sorting for ... directories
-    /*if (s1.length() < s2.length()) {
+
+    /*
+    if (s1.length() < s2.length()) {
         std::swap(s1, s2);
-    }
-    */
+    }*/
+
     /*
     while (s1.length() > 1 && s1.at(0) == '.') {
         s1.erase(0,1);
@@ -69,7 +94,12 @@ bool caseincomp(std::string s1, std::string s2) {
     while (s1.length() > 1 && s2.length() > 1 && s1.at(0) == '.' && s2.at(0) == '.') {
         s1.erase(0,1);
         s2.erase(0,1);
-    } */
+    }*/
+
+    return boost::to_upper_copy(s1) < boost::to_upper_copy(s2);
+}
+
+bool caseincomp(std::string s1, std::string s2) {
     return boost::to_upper_copy(s1) < boost::to_upper_copy(s2);
 }
 
@@ -77,8 +107,9 @@ bool caseincomp(std::string s1, std::string s2) {
 // Looks through given directory, returns list of files and
 // directories in files
 // Returns name of directory
+
 void parsedirec(std::string arg, uint8_t flags,
-        std::vector<std::string>& files,
+        std::vector<std::pair<std::string, std::string> >& files,
         std::vector<std::string>& dirs) {
 
     // If no other arguments are passed in, only use current directory
@@ -101,7 +132,7 @@ void parsedirec(std::string arg, uint8_t flags,
     // Call perror here too
     while (NULL != (filespecs = readdir(dirp))) {
         // Must keep path of file, otherwise won't find
-        std::string str(filespecs->d_name);
+        const std::string str(filespecs->d_name);
         std::string full = arg + "/" + str;
         //std::cout << full << std::endl;
 
@@ -127,7 +158,8 @@ void parsedirec(std::string arg, uint8_t flags,
         if (S_ISDIR(dstat.st_mode)) {
             dirs.push_back(str);
         }
-        files.push_back(str);
+        std::pair<std::string, std::string> p(str, "");
+        files.push_back(p);
         //std::cout << filespecs->d_name << " ";
 
     }
@@ -139,36 +171,56 @@ void parsedirec(std::string arg, uint8_t flags,
         perror("closedir");
         exit(1);
     }
-    std::sort(files.begin(), files.end(), caseincomp);
+    std::sort(files.begin(), files.end(), paircaseincomp);
     std::sort(dirs.begin(), dirs.end());
 }
 
 // Manages passing in directories
+
 void parsemanager(std::vector<std::string> args, uint8_t flags, std::vector<dirc>& fs) {
     if (args.size() == 0) args.push_back(".");
     for (unsigned i = 0; i < args.size(); ++i) {
         fs.push_back(dirc());
         parsedirec(args.at(i), flags, fs.at(i).files, fs.at(i).dirs);
         fs.at(i).name = args.at(i);
-
+        // TODO:Need to call filestat, but also when sorting keep track of
+        // sorted objects
         // Recursive enabled
+        if (flags & 0x04) {
+            for (unsigned j = 0; j < fs.at(i).files.size(); ++j) {
+                // Skip . and .. files
+                //if (fs.at(i).dirs.at(j) == "." || fs.at(i).dirs.at(j) == "..") continue;
+                std::string path = fs.at(i).name + "/" + fs.at(i).files.at(j).first;
+                //std::cout << "path: " << path << std::endl;
+                fs.at(i).files.at(j).second = filestats(path);
+
+            }
+        }
         if (flags & 0x02) {
             for (unsigned j = 0; j < fs.at(i).dirs.size(); ++j) {
                 // Skip . and .. files
                 if (fs.at(i).dirs.at(j) == "." || fs.at(i).dirs.at(j) == "..") continue;
-                args.push_back(fs.at(i).name + "/" + fs.at(i).dirs.at(j));
+                std::string path = fs.at(i).name + "/" + fs.at(i).dirs.at(j);
+                boost::trim(path);
+                args.push_back(path);
+         //           if (flags & 0x04) {
+                        //std::cout << path << std::endl;
+         //               fs.at(i).files.at(j).second = filestats(path);
+         //           }
+
             }
         }
-        std::sort(args.begin(), args.end(), caseincomp);
     }
+        // Make sure this is compatible with filestats
+        std::sort(args.begin(), args.end(), caseincomp);
 }
+
 
 
 // Returns filemode character
 std::string filemode (mode_t m) {
     // Is this even necessary
     if (!m) return "-";
-
     if S_ISREG(m) return "-";
     if S_ISDIR(m) return "d";
     if S_ISCHR(m) return "c";
@@ -239,7 +291,7 @@ std::string timetostring(time_t& t) {
 std::string filestats(std::string s) {
     struct stat st;
     if (-1 == stat(s.c_str(), &st)) {
-        perror("stat");
+        perror("stat not found");
         return "";
     }
 
@@ -281,9 +333,9 @@ int main(int argc, char **argv) {
     uint8_t flags = getFlags(args);
     std::sort(args.begin(), args.end(), caseincomp);
 
-    if (flags & 0x01) std::cout << "Flag -a enabled" << std::endl;
-    if (flags & 0x02) std::cout << "Flag -R enabled" << std::endl;
-    if (flags & 0x04) std::cout << "Flag -l enabled" << std::endl;
+    //if (flags & 0x01) std::cout << "Flag -a enabled" << std::endl;
+    //if (flags & 0x02) std::cout << "Flag -R enabled" << std::endl;
+    //if (flags & 0x04) std::cout << "Flag -l enabled" << std::endl;
     //std::copy(args.begin(), args.end(), std::ostream_iterator<std::string>(std::cout, "\n"));
 
     //std::vector<std::string> files;
@@ -304,9 +356,11 @@ int main(int argc, char **argv) {
         }
         for (auto it = fs.at(i).files.begin(); it != fs.at(i).files.end(); ++it) {
             if (flags & 0x04) {
-                std::cout << filestats(*it) << " " << *it << std::endl;
+            //    if (filestats((*it).second) == "") continue;
+                //std::cout << filestats((*it).first) << " " << (*it).first << std::endl;
+                std::cout << (*it).second << (*it).first << std::endl;
             }
-            else std::cout << *it << "  ";
+            else std::cout << (*it).first << "  ";
         }
         std::cout << std::endl;
         if (i + 1 < fs.size()) std::cout << std::endl;
