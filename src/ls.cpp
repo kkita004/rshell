@@ -1,6 +1,7 @@
 // ls program for cs 100
 #include <iostream>
 #include <vector>
+#include <sstream>
 #include <ostream>
 #include <iterator>
 #include <cstdlib>
@@ -18,7 +19,7 @@
 
 #include <boost/algorithm/string.hpp>
 
-std::string filestats(std::string, int& );
+std::string filestats(std::string, int&, unsigned&, unsigned&);
 
 
 // Struct dirc holds name of directory,
@@ -29,8 +30,16 @@ struct dirc {
     std::string name;
     std::vector<std::pair<std::string, std::string> > files;
     std::vector<std::string> dirs;
+    unsigned max_len_size = 1;
+    unsigned max_len_link = 1;
 };
 
+// Return length of string for formatting
+unsigned int numLength(unsigned int i) {
+    if (i == 0) return 1;
+    return std::to_string(i).length();
+
+}
 
 // Parses input to find flags argument, returns enabled flags
 // Will erase any argument starting with a '-' character
@@ -192,8 +201,9 @@ void parsemanager(std::vector<std::string> args, uint8_t flags, std::vector<dirc
                 //if (fs.at(i).dirs.at(j) == "." || fs.at(i).dirs.at(j) == "..") continue;
                 std::string path = fs.at(i).name + "/" + fs.at(i).files.at(j).first;
                 //std::cout << "path: " << path << std::endl;
-                fs.at(i).files.at(j).second = filestats(path,fs.at(i).blocksize);
-
+                fs.at(i).files.at(j).second =
+                filestats(path,fs.at(i).blocksize,
+                          fs.at(i).max_len_link, fs.at(i).max_len_size);
             }
         }
         if (flags & 0x02) {
@@ -207,7 +217,6 @@ void parsemanager(std::vector<std::string> args, uint8_t flags, std::vector<dirc
                         //std::cout << path << std::endl;
          //               fs.at(i).files.at(j).second = filestats(path);
          //           }
-
             }
         }
     }
@@ -287,7 +296,8 @@ std::string timetostring(time_t& t) {
 
 // Get file details
 // Take in directory, return string with file details
-std::string filestats(std::string s, int& blocksize) {
+std::string filestats(std::string s, int& blocksize,
+                      unsigned& max_len_link, unsigned& max_len_size) {
     struct stat st;
     if (-1 == stat(s.c_str(), &st)) {
         perror("stat not found");
@@ -322,8 +332,72 @@ std::string filestats(std::string s, int& blocksize) {
     r.append(" ");
     // Convert blocks to 1024
     blocksize += st.st_blocks / 2; //ceil((st.st_size + 1) / 1024);
+    //std::cout << numLength(st.st_nlink) << std::endl;
+    //std::cout << max_len_link << std::endl;
+    if (max_len_link < numLength(st.st_nlink)) {
+        max_len_link = numLength(st.st_nlink);
+    }
+
+    if (max_len_size < numLength(st.st_size)) {
+        max_len_size = numLength(st.st_size);
+    }
 
     return r;
+}
+
+void outputfs(std::vector<dirc>& fs, uint8_t flags) {
+    for (unsigned i = 0; i < fs.size(); ++i) {
+        if (fs.size() > 1) {
+            std::cout << fs.at(i).name << ":" << std::endl;
+        }
+        if (flags & 0x04) {
+            std::cout << "total " << fs.at(i).blocksize << std::endl;
+        }
+        for (auto it = fs.at(i).files.begin(); it != fs.at(i).files.end(); ++it) {
+            //std::cout << fs.at(i).max_len_link << std::endl;
+            if (flags & 0x04) {
+                std::stringstream ss((*it).second);
+                std::string s;
+                ss >> s;
+                std::cout.width(fs.at(i).max_len_link);
+                std::cout << s << ' ';
+                //std::cout << fs.at(i).max_len_link;
+                ss >> s;
+                std::cout << s;
+                std::cout << ' ';
+                std::cout.width(0);
+                // Output user
+                ss >> s;
+                std::cout << s << ' ';
+                // Output Group
+                ss >> s;
+                std::cout << s << ' ';
+
+                // Output bytes
+                std::cout.width(fs.at(i).max_len_size);
+                ss >> s;
+                std::cout << s << ' ';
+
+                // Output date
+                std::cout.width(3);
+                ss >> s;
+                std::cout << s << ' ' << std::flush;
+
+                ss >> s;
+                std::cout << std::right;
+                std::cout << s << std::flush;
+
+//                while (ss >> s) {
+//                    std::cout << s << ' ';
+//                }
+                std::cout << ' ' << (*it).first << std::endl;
+                //std::cout << (*it).second << (*it).first << std::endl;
+            }
+            else std::cout << (*it).first << "  ";
+        }
+        std::cout << std::endl;
+        //if (i + 1 < fs.size()) std::cout << std::endl;
+    }
 }
 
 int main(int argc, char **argv) {
@@ -343,31 +417,13 @@ int main(int argc, char **argv) {
     std::vector<dirc> fs;
 
     parsemanager(args, flags, fs);
+    outputfs(fs, flags);
     //parsedirec(args, flags, files, dirs);
     /*
        for (unsigned i =0; i < files.size(); ++i) {
        std::cout << files.at(i) << std::endl;
        }
     */
-
-    for (unsigned i = 0; i < fs.size(); ++i) {
-        if (fs.size() > 1) {
-            std::cout << fs.at(i).name << ":" << std::endl;
-        }
-        if (flags & 0x04) {
-            std::cout << "total " << fs.at(i).blocksize << std::endl;
-        }
-        for (auto it = fs.at(i).files.begin(); it != fs.at(i).files.end(); ++it) {
-            if (flags & 0x04) {
-            //    if (filestats((*it).second) == "") continue;
-                //std::cout << filestats((*it).first) << " " << (*it).first << std::endl;
-                std::cout << (*it).second << (*it).first << std::endl;
-            }
-            else std::cout << (*it).first << "  ";
-        }
-        std::cout << std::endl;
-        //if (i + 1 < fs.size()) std::cout << std::endl;
-    }
 
     return 0;
 }
