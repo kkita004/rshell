@@ -8,6 +8,9 @@
 #include <cctype>
 #include <time.h>
 
+#include <pwd.h>
+#include <grp.h>
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <dirent.h>
@@ -224,6 +227,10 @@ std::string filestats(std::string s) {
         return "";
     }
 
+    // Get user and group names
+    struct passwd *u = getpwuid(st.st_uid);
+    struct group *g = getgrgid(st.st_gid);
+
     std::string r;
 
     r.append(filemode(st.st_mode));
@@ -231,9 +238,9 @@ std::string filestats(std::string s) {
     r.append(" ");
     r.append(std::to_string((int)st.st_nlink));
     r.append(" ");
-    r.append(std::to_string(st.st_uid));
+    r.append(u->pw_name);
     r.append(" ");
-    r.append(std::to_string(st.st_gid));
+    r.append(g->gr_name);
     r.append(" ");
     r.append(std::to_string(st.st_size));
     r.append(" ");
