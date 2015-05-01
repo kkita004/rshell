@@ -206,12 +206,27 @@ std::string permissions(mode_t m) {
     return s;
 }
 
-std::string timetostring(time_t t) {
-    struct tm * ti;
-    ti = localtime(&t);
+std::string timetostring(time_t& t) {
+    // Get Current Time now to decide whether to output
+    // Year or Time
+    time_t tnow;
+    //time(&tnow);
+    time(&tnow);
+    struct tm* tnowinfo = localtime(&tnow);
+
+    struct tm* ti = localtime(&t);
+    // ti = localtime(&t);
 
     char buffer[80];
-    strftime(buffer, 80, "%h %e %R", ti);
+
+    // If matches current year, output time
+    // else output year instead
+    if (tnowinfo->tm_year == ti->tm_year) {
+        strftime(buffer, 80, "%h %e %R", ti);
+    } else {
+        strftime(buffer, 80, "%h %e %Y", ti);
+    }
+
     std::string s(buffer);
     boost::trim(s);
     return s;
@@ -229,7 +244,14 @@ std::string filestats(std::string s) {
 
     // Get user and group names
     struct passwd *u = getpwuid(st.st_uid);
+    if (NULL == u) {
+        perror("getpwuid");
+    }
+
     struct group *g = getgrgid(st.st_gid);
+    if (NULL == g) {
+        perror("getgrgid");
+    }
 
     std::string r;
 
