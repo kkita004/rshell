@@ -1,5 +1,6 @@
 // ls program for cs 100
 #include <iostream>
+#include <iomanip>
 #include <vector>
 #include <sstream>
 #include <ostream>
@@ -13,6 +14,7 @@
 #include <pwd.h>
 #include <grp.h>
 
+#include <sys/ioctl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <dirent.h>
@@ -346,6 +348,16 @@ std::string filestats(std::string s, int& blocksize,
     return r;
 }
 
+unsigned getNumCols() {
+    struct winsize w;
+    if (-1 == ioctl(0, TIOCGWINSZ, &w)) {
+        perror("ioctl");
+        return 80;
+    }
+
+    return (unsigned) w.ws_col;
+}
+
 void outputfs(std::vector<dirc>& fs, uint8_t flags) {
     std::sort(fs.begin(), fs.end(), dirccomp);
     for (unsigned i = 0; i < fs.size(); ++i) {
@@ -357,6 +369,20 @@ void outputfs(std::vector<dirc>& fs, uint8_t flags) {
         }
         // Keep track if line was empty or not
         bool somethingOutput = false;
+        bool hasReset = false;
+        unsigned linelength = 0;
+        unsigned cols = getNumCols();
+        unsigned columncount = 0;
+        std::stringstream outputBuffer;
+
+        unsigned longeststring = 0;
+        // get longest string
+        for (auto it = fs.at(i).files.begin(); it != fs.at(i).files.end(); ++it) {
+            if ((*it).first.length() > longeststring) {
+                longeststring = (*it).first.length();
+            }
+        }
+
         for (auto it = fs.at(i).files.begin(); it != fs.at(i).files.end(); ++it) {
             if ((*it).first == "") continue;
             if (flags & 0x04) {
@@ -404,10 +430,37 @@ void outputfs(std::vector<dirc>& fs, uint8_t flags) {
             }
             // Change this to formatting into columns
             else {
-                std::cout << (*it).first << "  ";
+                linelength += (*it).first.length() + 2;
+                if (linelength <= cols) {
+                    //linelength += (*it).first.length() + 2;
+                    outputBuffer << (*it).first << "  ";
+                } else if (!hasReset) {
+                    // if line output is not long enough, go back to beginning
+                    // find longest string, divide column count by string length
+                    // setwidth that value
+                    //
+                    it = fs.at(i).files.begin();
+                    hasReset = true;
+                } else {
+                    unsigned ratio = cols / (longeststring + 1);
+                    //std::cout << "ratio: " << ratio;
+                    // TODO: Fix this to accomodate variable terminal widths
+                    std::cout << std::setw(longeststring + 1) << std::left;
+                    std::cout << (*it).first << std::flush;
+                    columncount++;
+                    if (columncount >= ratio) {
+                        std::cout << std::endl;
+                        columncount = 0;
+                    }
+                }
+                //std::cout << (*it).first << " ";
             }
             somethingOutput = true;
 
+        }
+        //std::cout << "cols: " << cols << std::endl;
+        if (linelength <= cols) {
+            std::cout << outputBuffer.str();
         }
         //std::cout << std::endl;
         if (somethingOutput && flags == 0x02) {
@@ -419,7 +472,7 @@ void outputfs(std::vector<dirc>& fs, uint8_t flags) {
     }
     // If -a or empty, then output an extra newline
     if (!flags || (flags == 0x01) ) {
-        std::cout << "ENDLINE" << std::endl;
+        std::cout << std::endl;
     }
 }
 
