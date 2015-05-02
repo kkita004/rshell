@@ -130,6 +130,19 @@ void parsedirec(std::string arg, uint8_t flags,
     //if (args.size() == 0) files.push_back(".");
     //else {files = args;}
 
+
+    // if argument is a file..
+    struct stat filestats;
+    if (stat(arg.c_str(), &filestats)) {
+        perror("stat");
+        exit(1);
+    }
+
+    if ((filestats.st_mode & 0170000) == 0100000) {
+        std::pair<std::string, std::string> (arg, "");
+        return;
+    }
+
     DIR* dirp;
     // Couldn't open directory, might not exist
     if (NULL == (dirp = opendir(arg.c_str()))) {
@@ -144,7 +157,7 @@ void parsedirec(std::string arg, uint8_t flags,
     // Call perror here too
     while (NULL != (filespecs = readdir(dirp))) {
         // Must keep path of file, otherwise won't find
-        const std::string str(filespecs->d_name);
+        std::string str(filespecs->d_name);
         std::string full = arg + "/" + str;
         //std::cout << full << std::endl;
 
@@ -169,6 +182,7 @@ void parsedirec(std::string arg, uint8_t flags,
         // Might need to call perror here
         if (S_ISDIR(dstat.st_mode)) {
             dirs.push_back(str);
+            str = str + "/";
         }
         std::pair<std::string, std::string> p(str, "");
         files.push_back(p);
@@ -480,9 +494,12 @@ void outputfs(std::vector<dirc>& fs, uint8_t flags) {
         if (i + 1 < fs.size()) {
             std::cout << std::endl;
         }
+        if (fs.size() > 1 && (!flags || (flags == 0x01)) && i + 1 < fs.size() ) {
+            std::cout << std::endl;
+        }
     }
     // If -a or empty, then output an extra newline
-    if (!flags || (flags == 0x01) ) {
+    if (!flags || (flags == 0x01)) {
         std::cout << std::endl;
     }
 }
