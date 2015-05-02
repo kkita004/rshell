@@ -112,6 +112,11 @@ bool caseincomp(std::string s1, std::string s2) {
     return boost::to_upper_copy(s1) < boost::to_upper_copy(s2);
 }
 
+bool dirccomp(dirc d1, dirc d2) {
+    return boost::to_upper_copy(d1.name) < boost::to_upper_copy(d2.name);
+
+}
+
 
 // Looks through given directory, returns list of files and
 // directories in files
@@ -346,6 +351,7 @@ std::string filestats(std::string s, int& blocksize,
 }
 
 void outputfs(std::vector<dirc>& fs, uint8_t flags) {
+    std::sort(fs.begin(), fs.end(), dirccomp);
     for (unsigned i = 0; i < fs.size(); ++i) {
         if (fs.size() > 1) {
             std::cout << fs.at(i).name << ":" << std::endl;
@@ -354,7 +360,6 @@ void outputfs(std::vector<dirc>& fs, uint8_t flags) {
             std::cout << "total " << fs.at(i).blocksize << std::endl;
         }
         for (auto it = fs.at(i).files.begin(); it != fs.at(i).files.end(); ++it) {
-            //std::cout << fs.at(i).max_len_link << std::endl;
             if (flags & 0x04) {
                 std::stringstream ss((*it).second);
                 std::string s;
@@ -384,20 +389,31 @@ void outputfs(std::vector<dirc>& fs, uint8_t flags) {
                 std::cout << s << ' ' << std::flush;
 
                 ss >> s;
-                std::cout << std::right;
-                std::cout << s << std::flush;
+                if (s.length() == 1) {
+                    s = " " + s;
+                }
+                //std::cout << std::right;
+                std::cout << s << ' ' << std::flush;
+
+                ss >> s;
+                if (s.length() == 4) {
+                    s = " " + s;
+                }
+                std::cout << s << ' ' << std::flush;
 
 //                while (ss >> s) {
 //                    std::cout << s << ' ';
 //                }
-                std::cout << ' ' << (*it).first << std::endl;
+                std::cout << (*it).first << std::endl;
                 //std::cout << (*it).second << (*it).first << std::endl;
             }
+            // Change this to formatting into columns
             else std::cout << (*it).first << "  ";
         }
-        std::cout << std::endl;
-        //if (i + 1 < fs.size()) std::cout << std::endl;
+        //std::cout << std::endl;
+        if (i + 1 < fs.size()) std::cout << std::endl;
     }
+//    std::cout << std::endl;
 }
 
 int main(int argc, char **argv) {
