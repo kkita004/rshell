@@ -233,13 +233,24 @@ void parsemanager(std::vector<std::string> args, uint8_t flags, std::vector<dirc
 std::string filemode (mode_t m) {
     // Is this even necessary
     if (!m) return "-";
+    // Apparently cppcheck throws a syntax error here
+    // not sure why
+    /*
     if S_ISREG(m) return "-";
     if S_ISDIR(m) return "d";
     if S_ISCHR(m) return "c";
     if S_ISBLK(m) return "b";
     if S_ISFIFO(m) return "p";
     if S_ISLNK(m) return "l";
-    if S_ISSOCK(m) return "s";
+    if S_ISSOCK(m) return "s";*/
+    if ((m & 0170000) == 0100000) return "-";
+    if ((m & 0170000) == 0040000) return "d";
+    if ((m & 0170000) == 0020000) return "c";
+    if ((m & 0170000) == 0060000) return "b";
+    if ((m & 0170000) == 0010000) return "p";
+    if ((m & 0170000) == 0120000) return "l";
+    if ((m & 0170000) == 0140000) return "s";
+
     return "-";
 }
 
