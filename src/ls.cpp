@@ -75,10 +75,6 @@ uint8_t getFlags(std::vector<std::string>& args) {
 
 // Case insensitive string comparison
 
-
-//bool caseincomp(std::string s1, std::string s2) { return true;
-//}
-
 bool paircaseincomp(const std::pair<std::string, std::string>& p1,
                 const std::pair<std::string, std::string>& p2) {
     std::string s1 = p1.first;
@@ -359,7 +355,10 @@ void outputfs(std::vector<dirc>& fs, uint8_t flags) {
         if (flags & 0x04) {
             std::cout << "total " << fs.at(i).blocksize << std::endl;
         }
+        // Keep track if line was empty or not
+        bool somethingOutput = false;
         for (auto it = fs.at(i).files.begin(); it != fs.at(i).files.end(); ++it) {
+            if ((*it).first == "") continue;
             if (flags & 0x04) {
                 std::stringstream ss((*it).second);
                 std::string s;
@@ -400,20 +399,28 @@ void outputfs(std::vector<dirc>& fs, uint8_t flags) {
                     s = " " + s;
                 }
                 std::cout << s << ' ' << std::flush;
-
-//                while (ss >> s) {
-//                    std::cout << s << ' ';
-//                }
                 std::cout << (*it).first << std::endl;
                 //std::cout << (*it).second << (*it).first << std::endl;
             }
             // Change this to formatting into columns
-            else std::cout << (*it).first << "  ";
+            else {
+                std::cout << (*it).first << "  ";
+            }
+            somethingOutput = true;
+
         }
         //std::cout << std::endl;
-        if (i + 1 < fs.size()) std::cout << std::endl;
+        if (somethingOutput && flags == 0x02) {
+            std::cout << std::endl;
+        }
+        if (i + 1 < fs.size()) {
+            std::cout << std::endl;
+        }
     }
-//    std::cout << std::endl;
+    // If -a or empty, then output an extra newline
+    if (!flags || (flags == 0x01) ) {
+        std::cout << "ENDLINE" << std::endl;
+    }
 }
 
 int main(int argc, char **argv) {
