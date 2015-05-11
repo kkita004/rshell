@@ -1,4 +1,4 @@
-// cp implementation 
+// cp implementation
 // Takes 2 additional parameters, input and output
 // Extra optional parameter copies 3 times nad gives copy time
 #include <iostream>
@@ -71,6 +71,7 @@ void readwrite1char(unsigned long long size, int argc, char **argv) {
     while ((rin = read(fr, &buffer, 1)) > 0) {
         rout = write(fw, &buffer, (ssize_t) rin);
         if (rout != rin) {
+            perror("rout");
             perror("write");
             exit(1);
         }
@@ -116,6 +117,7 @@ void readwritebufsiz(unsigned long long size, int argc, char **argv) {
     while ((rin = read(fr, &buffer, BUFSIZ)) > 0) {
         rout = write(fw, &buffer, (ssize_t) rin);
         if (rout != rin) {
+            perror("read");
             perror("write");
             exit(1);
         }
@@ -141,18 +143,20 @@ int main(int argc, char **argv) {
         exit(1);
     }
 
-    //  Check to see if files exist 
+    //  Check to see if files exist
 
     if (access(argv[1], F_OK) != 0) {
+        perror("access");
         std::cerr << "source file doesn't exist or no permissions" << std::endl;
         exit(1);
     }
     if (access(argv[2], F_OK) == 0) {
+        perror("access");
         std::cerr << "target file already exists" << std::endl;
         exit(1);
     }
 
-    // Get size of file 
+    // Get size of file
     unsigned long long size;
     struct stat st;
     if (stat(argv[1], &st) == 0) {
@@ -179,7 +183,9 @@ int main(int argc, char **argv) {
             std::cerr << "arg2 is directory" << std::endl;
             exit(1);
         }
-    } 
+    } else {
+        perror("stat");
+    }
 
     if(argc == 3){
         readwritebufsiz(size, argc, argv);
@@ -191,4 +197,4 @@ int main(int argc, char **argv) {
     }
 
     return 0;
-} 
+}

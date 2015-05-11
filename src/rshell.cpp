@@ -28,7 +28,7 @@
  * 2: ||
  * */
 
-std::string check_connector(std::string s, int* con) {
+std::string check_connector(const std::string s, int* con) {
     *con = 0;
     // Single character, special case if it is only ';'
     if (s.size() == 1) {
@@ -56,7 +56,7 @@ std::string check_connector(std::string s, int* con) {
 
 
 
-void parse_args(std::string s, std::vector<std::string>& v, int * connector) {
+void parse_args(const std::string s, std::vector<std::string>& v, int * connector) {
     using namespace boost;
     std::string curr_str = s;
     boost::trim(curr_str);
@@ -89,7 +89,7 @@ void parse_args(std::string s, std::vector<std::string>& v, int * connector) {
  * Returns a negative value for index if error has been
  * found i.e. ("&&&" or "|||") */
 
-std::string parse_string(std::string s, int* index) {
+std::string parse_string(const std::string s, int* index) {
     /* If index < 0, meant error was returned last parse
      * Quit parsing */
     if (*index < 0) {
@@ -189,6 +189,53 @@ std::string parse_string(std::string s, int* index) {
     *index = i + 1;
     return s.substr(start, i - start);
 }
+
+
+/* Takes string and splits based on piping*/
+void check_piping(const std::string s, std::vector<std::string>& v) {
+    boost::char_separator<char> delim("|");
+    boost::tokenizer<boost::escaped_list_separator<char> > tok(
+            s, boost::escaped_list_separator<char>('\\', '|', '\"'));
+    for (std::string t : tok) {
+        boost::trim(t);
+        v.push_back(t);
+    }
+    for (std::string s : v) {
+        std::cout << s << std::endl;
+    }
+}
+
+
+/* Takes string and creates pairs of input/output
+ *
+ */
+void check_redirect(const std::string s,
+        std::vector<std::pair<std::string, std::pair<std::string, std::string> > >& v) {
+    // holds entries
+    std::vector<std::string> temp;
+    // keep delimiters
+    // TODO: fix quotation mark parsing
+    boost::char_separator<char> delim("", "<>");
+    boost::tokenizer<boost::char_separator<char> > tok(s, delim);
+    for (std::string t : tok) {
+        temp.push_back(t);
+        std::cout << t << std::endl;
+    }
+
+    for (unsigned i = 0; i < temp.size(); ++i) {
+        if (temp.at(i) == "<") {
+            // input
+            std::cout << "input" << std::endl;
+
+        } else if (temp.at(i) == ">") {
+            // output
+            std::cout << "output" << std::endl;
+
+        }
+    }
+}
+
+
 
 void rshell_loop () {
     std::string input_s;
@@ -303,6 +350,14 @@ void rshell_loop () {
 }
 
 int main(int argc, char **argv) {
+    //std::vector<std::pair<std::string, std::pair<std::string, std::string> > > v;
+    //check_redirect(std::string(argv[1]), v);
+    //std::vector<std::string> v;
+    //std::string s;
+    //std::getline(std::cin, s);
+    //std::cout << s << std::endl;
+    //check_piping(s, v);
     rshell_loop();
+
     return 0;
 }

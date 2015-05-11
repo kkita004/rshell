@@ -139,7 +139,7 @@ void parsedirec(std::string arg, uint8_t flags,
     }
 
     if ((filestats.st_mode & 0170000) == 0100000) {
-        std::pair<std::string, std::string> (arg, "");
+        files.push_back(std::pair<std::string, std::string> (arg, ""));
         return;
     }
 
@@ -469,7 +469,6 @@ void outputfs(std::vector<dirc>& fs, uint8_t flags) {
                 } else {
                     unsigned ratio = cols / (longeststring + 1);
                     //std::cout << "ratio: " << ratio;
-                    // TODO: Fix this to accomodate variable terminal widths
                     std::cout << std::setw(longeststring + 1) << std::left;
                     std::cout << (*it).first << std::flush;
                     columncount++;
