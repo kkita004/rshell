@@ -21,6 +21,19 @@
 #include <boost/algorithm/string.hpp>
 
 
+
+struct io {
+    io() {}
+    io(std::string e, std::string i, std::string o) {
+        exec = e;
+        input = i;
+        output = o;
+    }
+    std::string exec;
+    std::string input;
+    std::string output;
+};
+
 /* Checks connector, returns string without connector
  * and indicates what connector was at end
  * 0: none or ;
@@ -246,10 +259,7 @@ bool separate_by_char_without_quotes(const std::string s, const char c,
  */
 //void check_redirect(const std::string s,
 //        std::vector<std::pair<std::string, std::pair<std::string, std::string> > >& v) {
-bool check_redirect(const std::string s,
-                        std::string& exec,
-                        std::string& input,
-                        std::string& output) {
+bool check_redirect(const std::string s, io& f) {
     // holds entries
     std::vector<std::string> temp;
     // keep delimiters
@@ -276,42 +286,42 @@ bool check_redirect(const std::string s,
     std::vector<std::string> v;
     if (inputExists && !outputExists) {
         if(!separate_by_char_without_quotes(s, '<', v)) return false;
-        exec = v.at(0);
+        f.exec = v.at(0);
         //boost::trim(exec);
-        input = v.at(1);
+        f.input= v.at(1);
         //boost::trim(input);
     } else if (!inputExists && outputExists) {
         if(!separate_by_char_without_quotes(s, '>', v)) return false;
-        exec = v.at(0);
+        f.exec = v.at(0);
         //boost::trim(exec);
-        output = v.at(1);
+        f.output = v.at(1);
         //boost::trim(output);
     } else if (inputExists && outputExists) {
         if (inputFirst) {
             if(!separate_by_char_without_quotes(s, '<', v)) return false;
-            exec = v.at(0);
+            f.exec = v.at(0);
             //boost::trim(exec);
             std::vector<std::string> v2;
             if(!separate_by_char_without_quotes(v.at(1), '>', v2)) return false;
-            input = v2.at(0);
-            output = v2.at(1);
+            f.input = v2.at(0);
+            f.output = v2.at(1);
         } else {
             if(!separate_by_char_without_quotes(s, '>', v)) return false;
-            exec = v.at(0);
+            f.exec = v.at(0);
             //boost::trim(exec);
             std::vector<std::string> v2;
             if(!separate_by_char_without_quotes(v.at(1), '<', v2)) return false;
-            output = v2.at(0);
-            input = v2.at(1);
+            f.output = v2.at(0);
+            f.input = v2.at(1);
         }
     } else {
         // no redirection found, set string as executable
-        exec = s;
+        f.exec = s;
     }
 
-    boost::trim(exec);
-    boost::trim(input);
-    boost::trim(output);
+    boost::trim(f.exec);
+    boost::trim(f.input);
+    boost::trim(f.output);
     return true;
     /*
     std::vector<std::string> combo;
@@ -471,13 +481,16 @@ int main(int argc, char **argv) {
     //std::vector<std::pair<std::string, std::pair<std::string, std::string> > > v;
     std::vector<std::string> v;
     check_piping(s, v);
+    for (std::string s : v) {
+        std::cout << s << std::endl;
+    }
     for (unsigned i = 0; i < v.size(); ++i) {
-        std::string input, output, exec;
-        check_redirect(v.at(i), exec, input, output);
+        io f;
+        check_redirect(v.at(i), f);
         std::cout << "input: " << v.at(i) << std::endl;
-        std::cout << "exec: " << exec << std::endl;
-        std::cout << "input: " << input << std::endl;
-        std::cout << "output: " << output << std::endl;
+        std::cout << "exec: " << f.exec << std::endl;
+        std::cout << "input: " << f.input << std::endl;
+        std::cout << "output: " << f.output << std::endl;
         std::cout << "-------------------------------------------------------" << std::endl;
     }
     //rshell_loop();
