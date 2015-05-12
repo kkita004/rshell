@@ -271,6 +271,7 @@ bool check_redirect(const std::string s,
     else outputExists = true;
 
     if (inputIndex < outputIndex) inputFirst = true;
+    else inputFirst = false;
 
     std::vector<std::string> v;
     if (inputExists && !outputExists) {
@@ -294,6 +295,14 @@ bool check_redirect(const std::string s,
             if(!separate_by_char_without_quotes(v.at(1), '>', v2)) return false;
             input = v2.at(0);
             output = v2.at(1);
+        } else {
+            if(!separate_by_char_without_quotes(s, '>', v)) return false;
+            exec = v.at(0);
+            boost::trim(exec);
+            std::vector<std::string> v2;
+            if(!separate_by_char_without_quotes(v.at(1), '<', v2)) return false;
+            output = v2.at(0);
+            input = v2.at(1);
         }
     }
     return true;
@@ -453,13 +462,17 @@ int main(int argc, char **argv) {
     std::getline(std::cin, s);
     //check_piping(s, v);
     //std::vector<std::pair<std::string, std::pair<std::string, std::string> > > v;
-    //std::vector<std::string> v;
-    std::string input, output, exec;
-    check_redirect(s, exec, input, output);
-    std::cout << "exec: " << exec << std::endl;
-    std::cout << "input: " << input << std::endl;
-    std::cout << "output: " << output << std::endl;
-    std::cout << s << std::endl;
+    std::vector<std::string> v;
+    check_piping(s, v);
+    for (unsigned i = 0; i < v.size(); ++i) {
+        std::string input, output, exec;
+        check_redirect(v.at(i), exec, input, output);
+        std::cout << "input: " << v.at(i) << std::endl;
+        std::cout << "exec: " << exec << std::endl;
+        std::cout << "input: " << input << std::endl;
+        std::cout << "output: " << output << std::endl;
+        std::cout << "-------------------------------------------------------" << std::endl;
+    }
     //rshell_loop();
 
     return 0;
