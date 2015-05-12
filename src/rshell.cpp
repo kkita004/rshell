@@ -277,20 +277,20 @@ bool check_redirect(const std::string s,
     if (inputExists && !outputExists) {
         if(!separate_by_char_without_quotes(s, '<', v)) return false;
         exec = v.at(0);
-        boost::trim(exec);
+        //boost::trim(exec);
         input = v.at(1);
-        boost::trim(input);
+        //boost::trim(input);
     } else if (!inputExists && outputExists) {
         if(!separate_by_char_without_quotes(s, '>', v)) return false;
         exec = v.at(0);
-        boost::trim(exec);
+        //boost::trim(exec);
         output = v.at(1);
-        boost::trim(output);
+        //boost::trim(output);
     } else if (inputExists && outputExists) {
         if (inputFirst) {
             if(!separate_by_char_without_quotes(s, '<', v)) return false;
             exec = v.at(0);
-            boost::trim(exec);
+            //boost::trim(exec);
             std::vector<std::string> v2;
             if(!separate_by_char_without_quotes(v.at(1), '>', v2)) return false;
             input = v2.at(0);
@@ -298,13 +298,20 @@ bool check_redirect(const std::string s,
         } else {
             if(!separate_by_char_without_quotes(s, '>', v)) return false;
             exec = v.at(0);
-            boost::trim(exec);
+            //boost::trim(exec);
             std::vector<std::string> v2;
             if(!separate_by_char_without_quotes(v.at(1), '<', v2)) return false;
             output = v2.at(0);
             input = v2.at(1);
         }
+    } else {
+        // no redirection found, set string as executable
+        exec = s;
     }
+
+    boost::trim(exec);
+    boost::trim(input);
+    boost::trim(output);
     return true;
     /*
     std::vector<std::string> combo;
