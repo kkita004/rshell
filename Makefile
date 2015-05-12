@@ -11,6 +11,12 @@ all: $(OBJ)
 	$(CXX) rm.o -o bin/rm
 	-@rm *.o 2>/dev/null || true
 
+debugrshell:src/rshell.cpp
+	@mkdir -p bin
+	$(CXX) $(CXXFLAGS) -c -g src/rshell.cpp
+	$(CXX) rshell.o -g -o bin/rshell
+	-@rm *.o 2>/dev/null || true
+
 debugls: src/ls.cpp
 	@mkdir -p bin
 	$(CXX) $(CXXFLAGS) -c -g src/ls.cpp

@@ -193,34 +193,132 @@ std::string parse_string(const std::string s, int* index) {
 
 /* Takes string and splits based on piping*/
 void check_piping(const std::string s, std::vector<std::string>& v) {
-    boost::char_separator<char> delim("|");
+    //boost::char_separator<char> delim("|");
     boost::tokenizer<boost::escaped_list_separator<char> > tok(
             s, boost::escaped_list_separator<char>('\\', '|', '\"'));
     for (std::string t : tok) {
         boost::trim(t);
         v.push_back(t);
     }
-    for (std::string s : v) {
-        std::cout << s << std::endl;
-    }
+    //for (std::string s : v) {
+    //    std::cout << s << std::endl;
+    //}
 }
+
+// Searches for character but not in quotes
+unsigned find_without_quotes(const std::string s, const char c, unsigned index = -1) {
+    for (index++; index < s.size(); ++index) {
+        if (s.at(index) == c) return index;
+        if (s.at(index) == '\"') {
+            while (index < s.size()) {
+                if (s.at(index) == '\"') break;
+                index++;
+            }
+        }
+        else if (s.at(index) == '\'') {
+            while (index < s.size()) {
+                if (s.at(index) == '\'') break;
+                index++;
+            }
+        }
+        if (index >= s.size()) return s.size();
+    }
+    // Searched entire string, did not find
+    return index;
+}
+
+
+bool separate_by_char_without_quotes(const std::string s, const char c,
+    std::vector<std::string>& v) {
+    boost::tokenizer<boost::escaped_list_separator<char> > tok(
+            s, boost::escaped_list_separator<char>('\\', c, '\"'));
+    for (std::string t : tok) v.push_back(t);
+    // Multiple redirection characters found
+    // Return error
+    if (v.size() > 2) return false;
+    return true;
+}
+
 
 
 /* Takes string and creates pairs of input/output
  *
  */
-void check_redirect(const std::string s,
-        std::vector<std::pair<std::string, std::pair<std::string, std::string> > >& v) {
+//void check_redirect(const std::string s,
+//        std::vector<std::pair<std::string, std::pair<std::string, std::string> > >& v) {
+bool check_redirect(const std::string s,
+                        std::string& exec,
+                        std::string& input,
+                        std::string& output) {
     // holds entries
     std::vector<std::string> temp;
     // keep delimiters
     // TODO: fix quotation mark parsing
-    boost::char_separator<char> delim("", "<>");
-    boost::tokenizer<boost::char_separator<char> > tok(s, delim);
-    for (std::string t : tok) {
-        temp.push_back(t);
+
+    // separate by input
+    //boost::char_separator<char> delim("", "<>");
+
+    // Check if characters exist
+
+    bool inputExists, outputExists;
+    bool inputFirst;
+    unsigned inputIndex = find_without_quotes(s, '<');
+    unsigned outputIndex = find_without_quotes(s, '>');
+
+    if (inputIndex == s.size()) inputExists = false;
+    else inputExists = true;
+    if (outputIndex == s.size()) outputExists = false;
+    else outputExists = true;
+
+    if (inputIndex < outputIndex) inputFirst = true;
+
+    std::vector<std::string> v;
+    if (inputExists && !outputExists) {
+        if(!separate_by_char_without_quotes(s, '<', v)) return false;
+        exec = v.at(0);
+        boost::trim(exec);
+        input = v.at(1);
+        boost::trim(input);
+    } else if (!inputExists && outputExists) {
+        if(!separate_by_char_without_quotes(s, '>', v)) return false;
+        exec = v.at(0);
+        boost::trim(exec);
+        output = v.at(1);
+        boost::trim(output);
+    } else if (inputExists && outputExists) {
+        if (inputFirst) {
+            if(!separate_by_char_without_quotes(s, '<', v)) return false;
+            exec = v.at(0);
+            boost::trim(exec);
+            std::vector<std::string> v2;
+            if(!separate_by_char_without_quotes(v.at(1), '>', v2)) return false;
+            input = v2.at(0);
+            output = v2.at(1);
+        }
+    }
+    return true;
+    /*
+    std::vector<std::string> combo;
+    for (unsigned i = 0; i < temp.size(); ++i) {
+        if (temp.at(i).at(0) == '\"') {
+            unsigned j = i++;
+            std::string combostring = "";
+            while (j < temp.size()) {
+                j++;
+                combostring.append(temp.at(j));
+                if (temp.at(j).at(temp.at(j).size() - 1) == '\"');
+                    break;
+            }
+            i = j;
+            combo.push_back(combostring);
+        }
+        combo.push_back(temp.at(i));
+    }
+
+    for (std::string t : combo) {
         std::cout << t << std::endl;
     }
+
 
     for (unsigned i = 0; i < temp.size(); ++i) {
         if (temp.at(i) == "<") {
@@ -232,7 +330,7 @@ void check_redirect(const std::string s,
             std::cout << "output" << std::endl;
 
         }
-    }
+    }*/
 }
 
 
@@ -350,14 +448,19 @@ void rshell_loop () {
 }
 
 int main(int argc, char **argv) {
-    //std::vector<std::pair<std::string, std::pair<std::string, std::string> > > v;
-    //check_redirect(std::string(argv[1]), v);
     //std::vector<std::string> v;
-    //std::string s;
-    //std::getline(std::cin, s);
-    //std::cout << s << std::endl;
+    std::string s;
+    std::getline(std::cin, s);
     //check_piping(s, v);
-    rshell_loop();
+    //std::vector<std::pair<std::string, std::pair<std::string, std::string> > > v;
+    //std::vector<std::string> v;
+    std::string input, output, exec;
+    check_redirect(s, exec, input, output);
+    std::cout << "exec: " << exec << std::endl;
+    std::cout << "input: " << input << std::endl;
+    std::cout << "output: " << output << std::endl;
+    std::cout << s << std::endl;
+    //rshell_loop();
 
     return 0;
 }
