@@ -205,18 +205,99 @@ std::string parse_string(const std::string s, int* index) {
 
 
 /* Takes string and splits based on piping*/
-void check_piping(const std::string s, std::vector<std::string>& v) {
+bool check_piping(const std::string s, std::vector<std::string>& v) {
+    //unsigned j = 0;
+
+
+    //bool unfinishedQuotes = false;
+
+    bool doubleQuote = false, singleQuote = false;
+    unsigned j = 0;
+    for (unsigned i = 0; i < s.size(); ++i) {
+        if (s.at(i) == '\"' && !singleQuote) doubleQuote = !doubleQuote;
+        if (s.at(i) == '\'' && !doubleQuote) singleQuote = !singleQuote;
+
+        if (!doubleQuote && !singleQuote) {
+            if (s.at(i) == '|') {
+                v.push_back(s.substr(j,i - j));
+                j = i + 1;
+            } else if (i == s.size() - 1) {
+                v.push_back(s.substr(j));
+            }
+            // If j == 0, then there was no piping character
+            //if (j == 0 && i == s.size() - 1) v.push_back(s);
+        }
+    }
+
+    // check if quotes ended, otherwise it is error
+    return (!doubleQuote && !singleQuote);
+
+
+    /* boost::tokenizer<boost::escaped_list_separator<char> > t(
+            s,
+            boost::escaped_list_separator<char>("\\", "|", "\"\'"));
+    for (
+            boost::tokenizer<boost::escaped_list_separator<char> >::iterator i
+            = t.begin();
+            i != t.end(); ++i) {
+        std::string temp = *i;
+        // Remove white space and tabs
+        boost::trim(temp);
+        boost::trim_if(temp, boost::is_any_of("\t"));
+        if (temp != "") v.push_back(temp);
+    }*/
+
+    /*
+    char * str = new char[s.size()];
+    strcpy(str, s.c_str());
+    char * pch;
+    pch = strtok(str, "|");
+    std::vector<std::string> temp;
+    while (pch != NULL) {
+        std::string t(pch);
+        boost::trim(t);
+        temp.push_back(t);
+        pch = strtok(NULL, "|");
+    }
+
+    v = temp;
+    if(str) delete[] str;
+
+    */
+
+    /*for (unsigned i = 0; i < s.size(); ++i) {
+        if (s.at(i) == '\"') {
+            while (i < s.size()) {
+                if (i == s.size()) unfinishedQuotes = true;
+                i++;
+            }
+        } else if (s.at(i) == '\'') {
+            while (i < s.size()) {
+                if ( i == s.size()) unfinishedQuotes = true;
+                i++;
+            }
+        } else if (s.at(i) == '|')  {
+            v.push_back(s.substr(j,i - j));
+            j = i + 1;
+        }
+    }*/
+    /*
+    if (unfinishedQuotes) return false;
+    return true;*/
+}
+
+
     //boost::char_separator<char> delim("|");
-    boost::tokenizer<boost::escaped_list_separator<char> > tok(
-            s, boost::escaped_list_separator<char>('\\', '|', '\"'));
+    /*boost::tokenizer<boost::escaped_list_separator<char> > tok(
+            s, boost::escaped_list_separator<char>("\\", "|", "\'\""));
     for (std::string t : tok) {
         boost::trim(t);
         v.push_back(t);
-    }
+    }*/
     //for (std::string s : v) {
     //    std::cout << s << std::endl;
     //}
-}
+
 
 // Searches for character but not in quotes
 unsigned find_without_quotes(const std::string s, const char c, unsigned index = -1) {
@@ -242,7 +323,7 @@ unsigned find_without_quotes(const std::string s, const char c, unsigned index =
 
 
 bool separate_by_char_without_quotes(const std::string s, const char c,
-    std::vector<std::string>& v) {
+        std::vector<std::string>& v) {
     boost::tokenizer<boost::escaped_list_separator<char> > tok(
             s, boost::escaped_list_separator<char>('\\', c, '\"'));
     for (std::string t : tok) v.push_back(t);
@@ -324,38 +405,38 @@ bool check_redirect(const std::string s, io& f) {
     boost::trim(f.output);
     return true;
     /*
-    std::vector<std::string> combo;
-    for (unsigned i = 0; i < temp.size(); ++i) {
-        if (temp.at(i).at(0) == '\"') {
-            unsigned j = i++;
-            std::string combostring = "";
-            while (j < temp.size()) {
-                j++;
-                combostring.append(temp.at(j));
-                if (temp.at(j).at(temp.at(j).size() - 1) == '\"');
-                    break;
-            }
-            i = j;
-            combo.push_back(combostring);
-        }
-        combo.push_back(temp.at(i));
+       std::vector<std::string> combo;
+       for (unsigned i = 0; i < temp.size(); ++i) {
+       if (temp.at(i).at(0) == '\"') {
+       unsigned j = i++;
+       std::string combostring = "";
+       while (j < temp.size()) {
+       j++;
+       combostring.append(temp.at(j));
+       if (temp.at(j).at(temp.at(j).size() - 1) == '\"');
+       break;
+       }
+       i = j;
+       combo.push_back(combostring);
+       }
+       combo.push_back(temp.at(i));
+       }
+
+       for (std::string t : combo) {
+       std::cout << t << std::endl;
+       }
+
+
+       for (unsigned i = 0; i < temp.size(); ++i) {
+       if (temp.at(i) == "<") {
+    // input
+    std::cout << "input" << std::endl;
+
+    } else if (temp.at(i) == ">") {
+    // output
+    std::cout << "output" << std::endl;
+
     }
-
-    for (std::string t : combo) {
-        std::cout << t << std::endl;
-    }
-
-
-    for (unsigned i = 0; i < temp.size(); ++i) {
-        if (temp.at(i) == "<") {
-            // input
-            std::cout << "input" << std::endl;
-
-        } else if (temp.at(i) == ">") {
-            // output
-            std::cout << "output" << std::endl;
-
-        }
     }*/
 }
 
@@ -392,6 +473,8 @@ void rshell_loop () {
 
         }
         getline(std::cin, input_s);
+        // end of ctrl-d
+        if (!std::cin.good()) input_s = "exit";
         // Empty input
         boost::trim(input_s);
         if (input_s == "") continue;
@@ -399,101 +482,125 @@ void rshell_loop () {
         int i = 0;
 
         while ((unsigned) i < input_s.size() && i >= 0) {
-            std::vector<std::string> v;
-            int c = 0;
-            std::string parse = parse_string(input_s, &i);
-            // No closing quotes, break
-            if (i < 0) break;
-            parse_args(parse, v, &c);
+            // parse piping
+            std::vector<std::string> v_pipe;
+            check_piping(input_s, v_pipe);
+            // break if something goes wrong
+            bool quit_loop = false;
+            for (auto p = v_pipe.begin(); p != v_pipe.end(); ++p) {
+                std::vector<std::string> v_args;
+                int c = 0;
+                std::cout << "p: " << *p << std::endl;
+                std::string parse = parse_string(*p, &i);
+                // No closing quotes, break
+                if (i < 0) {
+                    quit_loop = true;
+                    break;
+                }
+                parse_args(parse, v_args, &c);
 
-            /*
-               for (unsigned b = 0; b < v.size(); ++b) {
-               std::cout << "VECTOR[" << b << "]:[" << v.at(b) << "]" << std::endl;
-               }
-               */
+                /*
+                   for (unsigned b = 0; b < v.size(); ++b) {
+                   std::cout << "VECTOR[" << b << "]:[" << v.at(b) << "]" << std::endl;
+                   }
+                   */
 
-            // Buffer only holds 1000 commands total;
-            // Any longer will cause errors
-            const char* args[1000];
-            // Clear buffer
-            for (unsigned i = v.size(); i < 1000 - v.size(); ++i) {
-                args[i] = '\0';
-            }
-            for (unsigned j = 0; j < v.size(); ++j) {
-                const char * p = v.at(j).c_str();
-                args[j] = p;
-            }
+                // Buffer only holds 1000 commands total;
+                // Any longer will cause errors
+                const char* args[1000] = { NULL };
+                // Clear buffer
+                /*
+                   for (unsigned i = v.size(); i < 1000 - v.size(); ++i) {
+                   args[i] = '\0';
+                   }*/
+                for (unsigned j = 0; j < v_args.size(); ++j) {
+                    const char * p = v_args.at(j).c_str();
+                    args[j] = p;
+                }
 
-            if (v.size() == 0) {
-                break;
-            }
-            // If command is exit
-            if (!strcmp(e, args[0])) {
-                exit(1);
-            }
+                if (v_args.size() == 0) {
+                    quit_loop = true;
+                    break;
+                }
+                // If command is exit
+                if (!strcmp(e, args[0])) {
+                    exit(1);
+                }
 
-            pid = fork();
-            // Something went wrong
-            if (pid == -1) {
-                perror("Fork error");
-                exit(1);
-                // If for some reason there's an error in exit();
-                perror("exit error");
-            }
-            // Child Process
-            else if (pid == 0) {
-                execvp(args[0], (char * const *) args);
-                perror("Command error");
-                _exit(1);
-            }
-            // Parent Process
-            else if (pid > 0) {
-                // wait(0) till child process finishes
-                int status = 0;
-                if (wait(&status) == -1) {
-                    perror("child process error");
-                } else {
-                    //child successfully changed
-                    if (status == 0) {
-                        // return value is true
-                        if (c == 2) {
-                            break;
+                pid = fork();
+                // Something went wrong
+                if (pid == -1) {
+                    perror("Fork error");
+                    exit(1);
+                    // If for some reason there's an error in exit();
+                    perror("exit error");
+                }
+                // Child Process
+                else if (pid == 0) {
+                    execvp(args[0], (char * const *) args);
+                    perror("Command error");
+                    _exit(1);
+                }
+                // Parent Process
+                else if (pid > 0) {
+                    // wait(0) till child process finishes
+                    int status = 0;
+                    if (wait(&status) == -1) {
+                        perror("child process error");
+                    } else {
+                        //child successfully changed
+                        if (status == 0) {
+                            // return value is true
+                            if (c == 2) {
+                                break;
+                            }
                         }
-                    }
-                    if (status != 0) {
-                        // return value is false;
-                        if (c == 1) {
-                            break;
+                        if (status != 0) {
+                            // return value is false;
+                            if (c == 1) {
+                                break;
+                            }
                         }
-                    }
 
+                    }
                 }
             }
+            if (quit_loop) break;
+
         }
     }
 }
 
 int main(int argc, char **argv) {
-    //std::vector<std::string> v;
+    //rshell_loop();
+    std::vector<std::string> v;
     std::string s;
     std::getline(std::cin, s);
-    //check_piping(s, v);
+    boost::trim(s);
+    if(!check_piping(s, v)) {std::cerr << "err" << std::endl;}
+    else {
+    for (std::string t : v) {
+        std::cout << t << std::endl;
+    }
+    }
+
+    /*//check_piping(s, v);
     //std::vector<std::pair<std::string, std::pair<std::string, std::string> > > v;
     std::vector<std::string> v;
     check_piping(s, v);
     for (std::string s : v) {
-        std::cout << s << std::endl;
+    std::cout << s << std::endl;
     }
     for (unsigned i = 0; i < v.size(); ++i) {
-        io f;
-        check_redirect(v.at(i), f);
-        std::cout << "input: " << v.at(i) << std::endl;
-        std::cout << "exec: " << f.exec << std::endl;
-        std::cout << "input: " << f.input << std::endl;
-        std::cout << "output: " << f.output << std::endl;
-        std::cout << "-------------------------------------------------------" << std::endl;
+    io f;
+    check_redirect(v.at(i), f);
+    std::cout << "input: " << v.at(i) << std::endl;
+    std::cout << "exec: " << f.exec << std::endl;
+    std::cout << "input: " << f.input << std::endl;
+    std::cout << "output: " << f.output << std::endl;
+    std::cout << "-------------------------------------------------------" << std::endl;
     }
-    //rshell_loop();
+    //rshell_loop();*/
 
     return 0;
 }
