@@ -1,0 +1,470 @@
+Script started on Fri 01 May 2015 11:34:01 PM PDT
+~
+kkita004@hammer $ cd repo/rshell
+~/repo/rshell
+kkita004@hammer $ # ls script test
+~/repo/rshell
+kkita004@hammer $ # no flags
+~/repo/rshell
+kkita004@hammer $ ls
+[0m[01;34mbin[0m/  LICENSE  Makefile  README.md  [01;34msrc[0m/  [01;34mtests[0m/
+[m~/repo/rshell
+kkita004@hammer $ bin/ls
+bin/  LICENSE  Makefile  README.md  src/  tests/  
+~/repo/rshell
+kkita004@hammer $ ls src
+ls.cpp  rshell.cpp
+~/repo/rshell
+kkita004@hammer $ bin/ls src
+ls.cpp  rshell.cpp  
+~/repo/rshell
+kkita004@hammer $ ls .
+[0m[01;34mbin[0m/  LICENSE  Makefile  README.md  [01;34msrc[0m/  [01;34mtests[0m/
+[m~/repo/rshell
+kkita004@hammer $ bin/ls .
+bin/  LICENSE  Makefile  README.md  src/  tests/  
+~/repo/rshell
+kkita004@hammer $ ls  ../rshell/.
+[0m[01;34mbin[0m/  LICENSE  Makefile  README.md  [01;34msrc[0m/  [01;34mtests[0m/
+~/repo/rshell
+kkita004@hammer $ bin/ls ../rshell/.
+bin/  LICENSE  Makefile  README.md  src/  tests/  
+~/repo/rshell
+kkita004@hammer $ # creating testing files
+~/repo/rshell
+kkita004@hammer $ mkdir testdir
+~/repo/rshell
+kkita004@hammer $ mkdir testdir/foobar
+~/repo/rshell
+kkita004@hammer $ touch testdir/foobar/helloworld
+~/repo/rshell
+kkita004@hammer $ touch testdir/barfoo
+~/repo/rshell
+kkita004@hammer $ mkdir testdir/.hidden
+~/repo/rshell
+kkita004@hammer $ touch testdir/.hidden/foo
+~/repo/rshell
+kkita004@hammer $ touch testdir/.hidden/bar
+~/repo/rshell
+kkita004@hammer $ touch testdir/.hidden/.hiddenfoo
+~/repo/rshell
+kkita004@hammer $ mkdir testdir/.hidden/.hiddendir
+~/repo/rshell
+kkita004@hammer $ touch testdir/.hidden/.hiddendir/mosthiddenfoo
+~/repo/rshell
+kkita004@hammer $ # -a flags
+~/repo/rshell
+kkita004@hammer $ ls -a
+[0m[01;34m.[0m/  [01;34m..[0m/  [01;34mbin[0m/  [01;34m.git[0m/  [01;34m.hidden[0m/  LICENSE  Makefile  README.md  [01;34msrc[0m/  [01;34mtestdir[0m/  [01;34mtests[0m/
+[m~/repo/rshell
+kkita004@hammer $ bin/ls -a
+../  ./  .git/  .hidden/  bin/  LICENSE  Makefile  README.md  src/  testdir/  tests/  
+~/repo/rshell
+kkita004@hammer $ ls -a .hidden
+[0m[01;34m.[0m/  [01;34m..[0m/
+[m~/repo/rshell
+kkita004@hammer $ bin/ls -a .hidden
+../  ./  
+~/repo/rshell
+kkita004@hammer $ # -R flags
+~/repo/rshell
+kkita004@hammer $ ls -R
+.:
+[0m[01;34mbin[0m/  LICENSE  Makefile  README.md  [01;34msrc[0m/  [01;34mtestdir[0m/  [01;34mtests[0m/
+
+./bin:
+[01;32mls[0m*  [01;32mrshell[0m*
+
+./src:
+ls.cpp  rshell.cpp
+
+./testdir:
+barfoo  [01;34mfoobar[0m/
+
+./testdir/foobar:
+helloworld
+
+./tests:
+exec.script  ls.script
+[m~/repo/rshell
+kkita004@hammer $ bin/ls -R
+.:
+bin/  LICENSE  Makefile  README.md  src/  testdir/  tests/  
+
+./bin:
+ls  rshell  
+
+./src:
+ls.cpp  rshell.cpp  
+
+./testdir:
+barfoo  foobar/  
+
+./testdir/foobar:
+helloworld  
+
+./tests:
+exec.script  ls.script  
+~/repo/rshell
+kkita004@hammer $ ls -R testdir
+testdir:
+barfoo  [0m[01;34mfoobar[0m/
+
+testdir/foobar:
+helloworld
+[m~/repo/rshell
+kkita004@hammer $ bin/ls -R testdir
+testdir:
+barfoo  foobar/  
+
+testdir/foobar:
+helloworld  
+~/repo/rshell
+kkita004@hammer $ # -l flags
+~/repo/rshell
+kkita004@hammer $ ls -l
+total 28
+drwx------ 2 kkita004 csmajs 4096 May  1 23:25 [0m[01;34mbin[0m/
+-rw------- 1 kkita004 csmajs  427 Apr 17 14:26 LICENSE
+-rw------- 1 kkita004 csmajs  453 May  1 10:13 Makefile
+-rw------- 1 kkita004 csmajs 1639 Apr 17 18:44 README.md
+drwx------ 2 kkita004 csmajs 4096 May  1 23:26 [01;34msrc[0m/
+drwx------ 4 kkita004 csmajs 4096 May  1 23:29 [01;34mtestdir[0m/
+drwx------ 2 kkita004 csmajs 4096 May  1 23:27 [01;34mtests[0m/
+[m~/repo/rshell
+kkita004@hammer $ bin/ls -l
+total 28
+drwx------ 2 kkita004 csmajs 4096 May  1 23:25 bin/
+-rw------- 1 kkita004 csmajs  427 Apr 17 14:26 LICENSE
+-rw------- 1 kkita004 csmajs  453 May  1 10:13 Makefile
+-rw------- 1 kkita004 csmajs 1639 Apr 17 18:44 README.md
+drwx------ 2 kkita004 csmajs 4096 May  1 23:26 src/
+drwx------ 4 kkita004 csmajs 4096 May  1 23:29 testdir/
+drwx------ 2 kkita004 csmajs 4096 May  1 23:27 tests/
+~/repo/rshell
+kkita004@hammer $ ls -l testdir
+total 4
+-rw------- 1 kkita004 csmajs    0 May  1 23:29 barfoo
+drwx------ 2 kkita004 csmajs 4096 May  1 23:29 [0m[01;34mfoobar[0m/
+[m~/repo/rshell
+kkita004@hammer $ bin/ls -l testdir
+total 4
+-rw------- 1 kkita004 csmajs    0 May  1 23:29 barfoo
+drwx------ 2 kkita004 csmajs 4096 May  1 23:29 foobar/
+~/repo/rshell
+kkita004@hammer $ # combination of flags
+~/repo/rshell
+kkita004@hammer $ bin/ls -a -l
+total 44
+drwx------ 6 kkita004 csmajs 4096 May  1 22:48 ../
+drwx------ 8 kkita004 csmajs 4096 May  1 23:29 ./
+drwx------ 8 kkita004 csmajs 4096 May  1 22:36 .git/
+drwx------ 2 kkita004 csmajs 4096 May  1 22:49 .hidden/
+drwx------ 2 kkita004 csmajs 4096 May  1 23:25 bin/
+-rw------- 1 kkita004 csmajs  427 Apr 17 14:26 LICENSE
+-rw------- 1 kkita004 csmajs  453 May  1 10:13 Makefile
+-rw------- 1 kkita004 csmajs 1639 Apr 17 18:44 README.md
+drwx------ 2 kkita004 csmajs 4096 May  1 23:26 src/
+drwx------ 4 kkita004 csmajs 4096 May  1 23:29 testdir/
+drwx------ 2 kkita004 csmajs 4096 May  1 23:27 tests/
+~/repo/rshell
+kkita004@hammer $ bin/ls -al 
+total 44
+drwx------ 6 kkita004 csmajs 4096 May  1 22:48 ../
+drwx------ 8 kkita004 csmajs 4096 May  1 23:29 ./
+drwx------ 8 kkita004 csmajs 4096 May  1 22:36 .git/
+drwx------ 2 kkita004 csmajs 4096 May  1 22:49 .hidden/
+drwx------ 2 kkita004 csmajs 4096 May  1 23:25 bin/
+-rw------- 1 kkita004 csmajs  427 Apr 17 14:26 LICENSE
+-rw------- 1 kkita004 csmajs  453 May  1 10:13 Makefile
+-rw------- 1 kkita004 csmajs 1639 Apr 17 18:44 README.md
+drwx------ 2 kkita004 csmajs 4096 May  1 23:26 src/
+drwx------ 4 kkita004 csmajs 4096 May  1 23:29 testdir/
+drwx------ 2 kkita004 csmajs 4096 May  1 23:27 tests/
+~/repo/rshell
+kkita004@hammer $ bin/ls -la 
+total 44
+drwx------ 6 kkita004 csmajs 4096 May  1 22:48 ../
+drwx------ 8 kkita004 csmajs 4096 May  1 23:29 ./
+drwx------ 8 kkita004 csmajs 4096 May  1 22:36 .git/
+drwx------ 2 kkita004 csmajs 4096 May  1 22:49 .hidden/
+drwx------ 2 kkita004 csmajs 4096 May  1 23:25 bin/
+-rw------- 1 kkita004 csmajs  427 Apr 17 14:26 LICENSE
+-rw------- 1 kkita004 csmajs  453 May  1 10:13 Makefile
+-rw------- 1 kkita004 csmajs 1639 Apr 17 18:44 README.md
+drwx------ 2 kkita004 csmajs 4096 May  1 23:26 src/
+drwx------ 4 kkita004 csmajs 4096 May  1 23:29 testdir/
+drwx------ 2 kkita004 csmajs 4096 May  1 23:27 tests/
+~/repo/rshell
+kkita004@hammer $ bin/ls -Rl
+.:
+total 28
+drwx------ 2 kkita004 csmajs 4096 May  1 23:25 bin/
+-rw------- 1 kkita004 csmajs  427 Apr 17 14:26 LICENSE
+-rw------- 1 kkita004 csmajs  453 May  1 10:13 Makefile
+-rw------- 1 kkita004 csmajs 1639 Apr 17 18:44 README.md
+drwx------ 2 kkita004 csmajs 4096 May  1 23:26 src/
+drwx------ 4 kkita004 csmajs 4096 May  1 23:29 testdir/
+drwx------ 2 kkita004 csmajs 4096 May  1 23:27 tests/
+
+./bin:
+total 236
+-rwx------ 1 kkita004 csmajs 158199 May  1 23:25 ls
+-rwx------ 1 kkita004 csmajs  73549 May  1 23:25 rshell
+
+./src:
+total 28
+-rw------- 1 kkita004 csmajs 15942 May  1 23:26 ls.cpp
+-rw------- 1 kkita004 csmajs  9026 Apr 17 14:26 rshell.cpp
+
+./testdir:
+total 4
+-rw------- 1 kkita004 csmajs    0 May  1 23:29 barfoo
+drwx------ 2 kkita004 csmajs 4096 May  1 23:29 foobar/
+
+./testdir/foobar:
+total 0
+-rw------- 1 kkita004 csmajs 0 May  1 23:29 helloworld
+
+./tests:
+total 8
+-rw------- 1 kkita004 csmajs 4883 Apr 17 14:26 exec.script
+-rw------- 1 kkita004 csmajs    0 May  1 23:27 ls.script
+~/repo/rshell
+kkita004@hammer $ bin/ls -laR testdir
+do_ypcall: clnt_call: RPC: Unable to send; errno = Operation not permitted
+testdir:
+total 16
+drwx------ 8 kkita004 csmajs 4096 May  1 23:29 ../
+drwx------ 4 kkita004 csmajs 4096 May  1 23:29 ./
+drwx------ 3 kkita004 csmajs 4096 May  1 23:29 .hidden/
+-rw------- 1 kkita004 csmajs    0 May  1 23:29 barfoo
+drwx------ 2 kkita004 csmajs 4096 May  1 23:29 foobar/
+
+testdir/.hidden:
+total 12
+drwx------ 4 kkita004 csmajs 4096 May  1 23:29 ../
+drwx------ 3 kkita004 csmajs 4096 May  1 23:29 ./
+drwx------ 2 kkita004 csmajs 4096 May  1 23:29 .hiddendir/
+-rw------- 1 kkita004 csmajs    0 May  1 23:29 .hiddenfoo
+-rw------- 1 kkita004 csmajs    0 May  1 23:29 bar
+-rw------- 1 kkita004 csmajs    0 May  1 23:29 foo
+
+testdir/.hidden/.hiddendir:
+total 8
+drwx------ 3 kkita004 csmajs 4096 May  1 23:29 ../
+drwx------ 2 kkita004 csmajs 4096 May  1 23:29 ./
+-rw------- 1 kkita004 csmajs    0 May  1 23:29 mosthiddenfoo
+
+testdir/foobar:
+total 8
+drwx------ 4 kkita004 csmajs 4096 May  1 23:29 ../
+drwx------ 2 kkita004 csmajs 4096 May  1 23:29 ./
+-rw------- 1 kkita004 csmajs    0 May  1 23:29 helloworld
+~/repo/rshell
+kkita004@hammer $ bin/ls -Ral testdir
+testdir:
+total 16
+drwx------ 8 kkita004 csmajs 4096 May  1 23:29 ../
+drwx------ 4 kkita004 csmajs 4096 May  1 23:29 ./
+drwx------ 3 kkita004 csmajs 4096 May  1 23:29 .hidden/
+-rw------- 1 kkita004 csmajs    0 May  1 23:29 barfoo
+drwx------ 2 kkita004 csmajs 4096 May  1 23:29 foobar/
+
+testdir/.hidden:
+total 12
+drwx------ 4 kkita004 csmajs 4096 May  1 23:29 ../
+drwx------ 3 kkita004 csmajs 4096 May  1 23:29 ./
+drwx------ 2 kkita004 csmajs 4096 May  1 23:29 .hiddendir/
+-rw------- 1 kkita004 csmajs    0 May  1 23:29 .hiddenfoo
+-rw------- 1 kkita004 csmajs    0 May  1 23:29 bar
+-rw------- 1 kkita004 csmajs    0 May  1 23:29 foo
+
+testdir/.hidden/.hiddendir:
+total 8
+drwx------ 3 kkita004 csmajs 4096 May  1 23:29 ../
+drwx------ 2 kkita004 csmajs 4096 May  1 23:29 ./
+-rw------- 1 kkita004 csmajs    0 May  1 23:29 mosthiddenfoo
+
+testdir/foobar:
+total 8
+drwx------ 4 kkita004 csmajs 4096 May  1 23:29 ../
+drwx------ 2 kkita004 csmajs 4096 May  1 23:29 ./
+-rw------- 1 kkita004 csmajs    0 May  1 23:29 helloworld
+~/repo/rshell
+kkita004@hammer $ bin/ls testdir -aRl
+testdir:
+total 16
+drwx------ 8 kkita004 csmajs 4096 May  1 23:29 ../
+drwx------ 4 kkita004 csmajs 4096 May  1 23:29 ./
+drwx------ 3 kkita004 csmajs 4096 May  1 23:29 .hidden/
+-rw------- 1 kkita004 csmajs    0 May  1 23:29 barfoo
+drwx------ 2 kkita004 csmajs 4096 May  1 23:29 foobar/
+
+testdir/.hidden:
+total 12
+drwx------ 4 kkita004 csmajs 4096 May  1 23:29 ../
+drwx------ 3 kkita004 csmajs 4096 May  1 23:29 ./
+drwx------ 2 kkita004 csmajs 4096 May  1 23:29 .hiddendir/
+-rw------- 1 kkita004 csmajs    0 May  1 23:29 .hiddenfoo
+-rw------- 1 kkita004 csmajs    0 May  1 23:29 bar
+-rw------- 1 kkita004 csmajs    0 May  1 23:29 foo
+
+testdir/.hidden/.hiddendir:
+total 8
+drwx------ 3 kkita004 csmajs 4096 May  1 23:29 ../
+drwx------ 2 kkita004 csmajs 4096 May  1 23:29 ./
+-rw------- 1 kkita004 csmajs    0 May  1 23:29 mosthiddenfoo
+
+testdir/foobar:
+total 8
+drwx------ 4 kkita004 csmajs 4096 May  1 23:29 ../
+drwx------ 2 kkita004 csmajs 4096 May  1 23:29 ./
+-rw------- 1 kkita004 csmajs    0 May  1 23:29 helloworld
+~/repo/rshell
+kkita004@hammer $ bin/ls -l -a -R testdir
+testdir:
+total 16
+drwx------ 8 kkita004 csmajs 4096 May  1 23:29 ../
+drwx------ 4 kkita004 csmajs 4096 May  1 23:29 ./
+drwx------ 3 kkita004 csmajs 4096 May  1 23:29 .hidden/
+-rw------- 1 kkita004 csmajs    0 May  1 23:29 barfoo
+drwx------ 2 kkita004 csmajs 4096 May  1 23:29 foobar/
+
+testdir/.hidden:
+total 12
+drwx------ 4 kkita004 csmajs 4096 May  1 23:29 ../
+drwx------ 3 kkita004 csmajs 4096 May  1 23:29 ./
+drwx------ 2 kkita004 csmajs 4096 May  1 23:29 .hiddendir/
+-rw------- 1 kkita004 csmajs    0 May  1 23:29 .hiddenfoo
+-rw------- 1 kkita004 csmajs    0 May  1 23:29 bar
+-rw------- 1 kkita004 csmajs    0 May  1 23:29 foo
+
+testdir/.hidden/.hiddendir:
+total 8
+drwx------ 3 kkita004 csmajs 4096 May  1 23:29 ../
+drwx------ 2 kkita004 csmajs 4096 May  1 23:29 ./
+-rw------- 1 kkita004 csmajs    0 May  1 23:29 mosthiddenfoo
+
+testdir/foobar:
+total 8
+drwx------ 4 kkita004 csmajs 4096 May  1 23:29 ../
+drwx------ 2 kkita004 csmajs 4096 May  1 23:29 ./
+-rw------- 1 kkita004 csmajs    0 May  1 23:29 helloworld
+~/repo/rshell
+kkita004@hammer $ bin/ls testdir -R -a -l 
+do_ypcall: clnt_call: RPC: Unable to send; errno = Operation not permitted
+testdir:
+total 16
+drwx------ 8 kkita004 csmajs 4096 May  1 23:29 ../
+drwx------ 4 kkita004 csmajs 4096 May  1 23:29 ./
+drwx------ 3 kkita004 csmajs 4096 May  1 23:29 .hidden/
+-rw------- 1 kkita004 csmajs    0 May  1 23:29 barfoo
+drwx------ 2 kkita004 csmajs 4096 May  1 23:29 foobar/
+
+testdir/.hidden:
+total 12
+drwx------ 4 kkita004 csmajs 4096 May  1 23:29 ../
+drwx------ 3 kkita004 csmajs 4096 May  1 23:29 ./
+drwx------ 2 kkita004 csmajs 4096 May  1 23:29 .hiddendir/
+-rw------- 1 kkita004 csmajs    0 May  1 23:29 .hiddenfoo
+-rw------- 1 kkita004 csmajs    0 May  1 23:29 bar
+-rw------- 1 kkita004 csmajs    0 May  1 23:29 foo
+
+testdir/.hidden/.hiddendir:
+total 8
+drwx------ 3 kkita004 csmajs 4096 May  1 23:29 ../
+drwx------ 2 kkita004 csmajs 4096 May  1 23:29 ./
+-rw------- 1 kkita004 csmajs    0 May  1 23:29 mosthiddenfoo
+
+testdir/foobar:
+total 8
+drwx------ 4 kkita004 csmajs 4096 May  1 23:29 ../
+drwx------ 2 kkita004 csmajs 4096 May  1 23:29 ./
+-rw------- 1 kkita004 csmajs    0 May  1 23:29 helloworld
+~/repo/rshell
+kkita004@hammer $ bin/ls -a testdir
+../  ./  .hidden/  barfoo  foobar/  
+~/repo/rshell
+kkita004@hammer $ # proper formatting of many files
+~/repo/rshell
+kkita004@hammer $ bin/ls ../..
+bash/        CS10/        CS100/       CS12/        CS120B/      CS14/        CS141/       
+CS61/        Desktop/     Documents/   Downloads/   kk/          Music/       output       
+Pictures/    Public/      repo/        saved/       sketchbook/  t            Templates/   
+test/        trash        untitled     Videos/      
+~/repo/rshell
+kkita004@hammer $ # outputs error on bad flags
+~/repo/rshell
+kkita004@hammer $ bin/ls -ZZZZZ 
+invalid option-ZZZZZ
+~/repo/rshell
+kkita004@hammer $ bin/ls -a -notanoption testdir
+invalid option-notnoption
+~/repo/rshell
+kkita004@hammer $ bin/ls -kfdskj
+invalid option-kfdskj
+~/repo/rshell
+kkita004@hammer $ # outputs error on nonexistent directory
+~/repo/rshell
+kkita004@hammer $ bin/ls thisfolderdoesntexist
+stat: No such file or directory
+~/repo/rshell
+kkita004@hammer $ bin/ls thisfolderdoesntexist testdir
+stat: No such file or directory
+~/repo/rshell
+kkita004@hammer $ # multiple dirs passed in testing
+~/repo/rshell
+kkita004@hammer $ bin/ls testdir testdir/foobar
+testdir:
+barfoo  foobar/  
+
+testdir/foobar:
+helloworld  
+~/repo/rshell
+kkita004@hammer $ bin/ls -a testdir testdir/foobar
+testdir:
+../  ./  .hidden/  barfoo  foobar/  
+
+testdir/foobar:
+../  ./  helloworld  
+~/repo/rshell
+kkita004@hammer $ bin/ls bin -a src tests
+bin:
+../  ./  ls  rshell  
+
+src:
+../  ./  ls.cpp  rshell.cpp  
+
+tests:
+../  ./  exec.script  ls.script  
+~/repo/rshell
+kkita004@hammer $ # known bug: does not accept files as parameters
+~/repo/rshell
+kkita004@hammer $ touch foo
+~/repo/rshell
+kkita004@hammer $ bin/ls foo
+
+~/repo/rshell
+kkita004@hammer $ rm -r testdir
+/bin/rm: descend into directory `testdir'? y
+/bin/rm: descend into directory `testdir/foobar'? y
+/bin/rm: remove regular empty file `testdir/foobar/helloworld'? y
+/bin/rm: remove directory `testdir/foobar'? y
+/bin/rm: remove regular empty file `testdir/barfoo'? y
+/bin/rm: descend into directory `testdir/.hidden'? y
+/bin/rm: remove regular empty file `testdir/.hidden/foo'? y
+/bin/rm: remove regular empty file `testdir/.hidden/bar'? y
+/bin/rm: remove regular empty file `testdir/.hidden/.hiddenfoo'? y
+/bin/rm: descend into directory `testdir/.hidden/.hiddendir'? y
+/bin/rm: remove regular empty file `testdir/.hidden/.hiddendir/mosthiddenfoo'? y
+/bin/rm: remove directory `testdir/.hidden/.hiddendir'? y
+/bin/rm: remove directory `testdir/.hidden'? y
+/bin/rm: remove directory `testdir'? y
+~/repo/rshell
+kkita004@hammer $ rm foo
+/bin/rm: remove regular empty file `foo'? y
+~/repo/rshell
+kkita004@hammer $ exit
+
+Script done on Fri 01 May 2015 11:40:04 PM PDT
