@@ -11,7 +11,9 @@
 
 // wait()
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <sys/wait.h>
+#include <fcntl.h>
 
 // perror()
 // strtok()
@@ -32,6 +34,7 @@ struct io {
     std::string exec;
     std::string input;
     std::string output;
+    bool isAppend = false;
 };
 
 /* Checks connector, returns string without connector
@@ -207,10 +210,7 @@ std::string parse_string(const std::string s, int* index) {
 /* Takes string and splits based on piping*/
 bool check_piping(const std::string s, std::vector<std::string>& v) {
     //unsigned j = 0;
-
-
     //bool unfinishedQuotes = false;
-
     bool doubleQuote = false, singleQuote = false;
     unsigned j = 0;
     for (unsigned i = 0; i < s.size(); ++i) {
@@ -302,20 +302,42 @@ bool check_piping(const std::string s, std::vector<std::string>& v) {
 // Searches for character but not in quotes
 unsigned find_without_quotes(const std::string s, const char c, unsigned index = -1) {
     for (index++; index < s.size(); ++index) {
-        if (s.at(index) == c) return index;
         if (s.at(index) == '\"') {
-            while (index < s.size()) {
-                if (s.at(index) == '\"') break;
+            while (index + 1< s.size()) {
                 index++;
+                if (s.at(index) == '\"') break;
             }
         }
         else if (s.at(index) == '\'') {
-            while (index < s.size()) {
-                if (s.at(index) == '\'') break;
+            while (index + 1 < s.size()) {
                 index++;
+                if (s.at(index) == '\'') break;
+            }
+        }
+        if (s.at(index) == c) return index;
+        if (index >= s.size()) return s.size();
+    }
+    // Searched entire string, did not find
+    return index;
+}
+
+// Finds a substring, can probably replace above function
+unsigned find_without_quotes(const std::string s, const std::string c, unsigned index = -1) {
+    for (index++; index < s.size(); ++index) {
+        if (s.at(index) == '\"') {
+            while (index + 1 < s.size()) {
+                index++;
+                if (s.at(index) == '\"') break;
+            }
+        }
+        else if (s.at(index) == '\'') {
+            while (index + 1 < s.size()) {
+                index++;
+                if (s.at(index) == '\'') break;
             }
         }
         if (index >= s.size()) return s.size();
+        if (s.substr(index, c.size()) == c) return index;
     }
     // Searched entire string, did not find
     return index;
@@ -479,25 +501,57 @@ void rshell_loop () {
         boost::trim(input_s);
         if (input_s == "") continue;
         int pid;
-        int i = 0;
 
-        while ((unsigned) i < input_s.size() && i >= 0) {
-            // parse piping
-            std::vector<std::string> v_pipe;
-            check_piping(input_s, v_pipe);
-            // break if something goes wrong
+        std::vector<std::string> v_pipe;
+        check_piping(input_s, v_pipe);
+        for (auto p = v_pipe.begin(); p != v_pipe.end(); ++p) {
+            int i = 0;
             bool quit_loop = false;
-            for (auto p = v_pipe.begin(); p != v_pipe.end(); ++p) {
+            while ((unsigned) i < (*p).size() && i >= 0) {
+                // parse piping
+                // break if something goes wrong
                 std::vector<std::string> v_args;
                 int c = 0;
-                std::cout << "p: " << *p << std::endl;
-                std::string parse = parse_string(*p, &i);
+
+                std::cout << "p: [" << *p <<  "]" << std::endl;
+                std::cout << "parsing string" << std::endl;
+
+                // Check if i/o redirection is necessary
+                io f;
+                check_redirect(*p, f);
+                bool inputOn = false, outputOn = false;
+                if (f.input != "") inputOn = true;
+                if (f.output != "") outputOn = true;
+
+                std::string parse = parse_string(f.exec, &i);
                 // No closing quotes, break
                 if (i < 0) {
                     quit_loop = true;
                     break;
                 }
+                std::cout << "parsing args" << std::endl;
                 parse_args(parse, v_args, &c);
+                // file descriptor holders
+                int fin = -2, fout = -2;
+
+                if (inputOn) fin = open(f.input.c_str(), O_RDONLY);
+                if (fin == -1) {
+                    perror("input file open");
+                    quit_loop = true;
+                    break;
+                }
+                if (outputOn) fout = open(f.output.c_str(),
+                    O_CREAT | O_WRONLY | O_TRUNC, 0644);
+
+                if (fout == -1) {
+                    perror("output file open");
+                    quit_loop = true;
+                    break;
+                }
+
+
+
+
 
                 /*
                    for (unsigned b = 0; b < v.size(); ++b) {
@@ -513,11 +567,14 @@ void rshell_loop () {
                    for (unsigned i = v.size(); i < 1000 - v.size(); ++i) {
                    args[i] = '\0';
                    }*/
+
+                // create argument array
                 for (unsigned j = 0; j < v_args.size(); ++j) {
                     const char * p = v_args.at(j).c_str();
                     args[j] = p;
                 }
 
+                // if blank command, break
                 if (v_args.size() == 0) {
                     quit_loop = true;
                     break;
@@ -566,23 +623,25 @@ void rshell_loop () {
                 }
             }
             if (quit_loop) break;
-
         }
     }
 }
 
 int main(int argc, char **argv) {
-    //rshell_loop();
-    std::vector<std::string> v;
     std::string s;
     std::getline(std::cin, s);
-    boost::trim(s);
-    if(!check_piping(s, v)) {std::cerr << "err" << std::endl;}
-    else {
-    for (std::string t : v) {
-        std::cout << t << std::endl;
-    }
-    }
+    std::cout << find_without_quotes(s, ">>") << std::endl;
+    //rshell_loop();
+    /*std::vector<std::string> v;
+      std::string s;
+      std::getline(std::cin, s);
+      boost::trim(s);
+      if(!check_piping(s, v)) {std::cerr << "err" << std::endl;}
+      else {
+      for (std::string t : v) {
+      std::cout << t << std::endl;
+      }
+      }*/
 
     /*//check_piping(s, v);
     //std::vector<std::pair<std::string, std::pair<std::string, std::string> > > v;
