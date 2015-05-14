@@ -509,26 +509,34 @@ void rshell_loop () {
         if (input_s == "") continue;
         int pid;
 
+        unsigned pipecount = 0;
+
         std::vector<std::string> v_pipe;
         check_piping(input_s, v_pipe);
+        pipecount = (v_pipe.size() - 1) * 2;
         for (auto p = v_pipe.begin(); p != v_pipe.end(); ++p) {
             int i = 0;
             bool quit_loop = false;
-            while ((unsigned) i < (*p).size() && i >= 0) {
+            // Check if i/o redirection is necessary
+            io f;
+            check_redirect(*p, f);
+            while ((unsigned) i < (f.exec).size() && i >= 0) {
                 // parse piping
                 // break if something goes wrong
                 std::vector<std::string> v_args;
                 int c = 0;
 
-                std::cout << "p: [" << *p <<  "]" << std::endl;
-                std::cout << "parsing string" << std::endl;
+                //std::cout << "p: [" << *p <<  "]" << std::endl;
+                //std::cout << "parsing string" << std::endl;
 
-                // Check if i/o redirection is necessary
-                io f;
-                check_redirect(*p, f);
                 bool inputOn = false, outputOn = false;
                 if (f.input != "") inputOn = true;
                 if (f.output != "") outputOn = true;
+
+                bool pipeOn;
+                // if pipe exists and is not at end
+                if (p + 1 != v_pipe.end()) pipeOn = true;
+                else pipeOn = false;
 
                 std::string parse = parse_string(f.exec, &i);
                 // No closing quotes, break
@@ -536,29 +544,8 @@ void rshell_loop () {
                     quit_loop = true;
                     break;
                 }
-                std::cout << "parsing args" << std::endl;
+                //std::cout << "parsing args" << std::endl;
                 parse_args(parse, v_args, &c);
-                // file descriptor holders
-                int fin = -2, fout = -2;
-
-                if (inputOn) fin = open(f.input.c_str(), O_RDONLY);
-                if (fin == -1) {
-                    perror("input file open");
-                    quit_loop = true;
-                    break;
-                }
-                if (outputOn) fout = open(f.output.c_str(),
-                        O_CREAT | O_WRONLY | O_TRUNC, 0644);
-
-                if (fout == -1) {
-                    perror("output file open");
-                    quit_loop = true;
-                    break;
-                }
-
-
-
-
 
                 /*
                    for (unsigned b = 0; b < v.size(); ++b) {
@@ -569,11 +556,6 @@ void rshell_loop () {
                 // Buffer only holds 1000 commands total;
                 // Any longer will cause errors
                 const char* args[1000] = { NULL };
-                // Clear buffer
-                /*
-                   for (unsigned i = v.size(); i < 1000 - v.size(); ++i) {
-                   args[i] = '\0';
-                   }*/
 
                 // create argument array
                 for (unsigned j = 0; j < v_args.size(); ++j) {
@@ -591,6 +573,25 @@ void rshell_loop () {
                     exit(1);
                 }
 
+                // file descriptor holders
+                int fin = -2, fout = -2;
+
+                if (inputOn) fin = open(f.input.c_str(), O_RDONLY);
+                if (fin == -1) {
+                    perror("opening input file");
+                    quit_loop = true;
+                    break;
+                }
+                int outputFlags = O_CREAT | O_WRONLY | O_TRUNC;
+                if (f.isAppend) outputFlags = O_CREAT | O_WRONLY | O_APPEND;
+                if (outputOn) fout = open(f.output.c_str(), outputFlags, 0644);
+
+                if (fout == -1) {
+                    perror("opening output file");
+                    quit_loop = true;
+                    break;
+                }
+
                 pid = fork();
                 // Something went wrong
                 if (pid == -1) {
@@ -601,6 +602,27 @@ void rshell_loop () {
                 }
                 // Child Process
                 else if (pid == 0) {
+                    if (inputOn) {
+                        if(-1 == dup2(fin, 0)) {
+                            perror("dup2 input error");
+                            exit(1);
+                        }
+                        if(-1 == close(fin)) {
+                            perror("close input");
+                            exit(1);
+                        }
+                    }
+                    if (outputOn) {
+                        if (-1 == dup2(fout, 1)) {
+                            perror("dup2 output error");
+                            exit(1);
+                        }
+                        if (-1 == close(fout)) {
+                            perror("close output");
+                            exit(1);
+                        }
+                    }
+
                     execvp(args[0], (char * const *) args);
                     perror("Command error");
                     _exit(1);
@@ -635,12 +657,14 @@ void rshell_loop () {
 }
 
 int main(int argc, char **argv) {
+    rshell_loop();
+    /*
     std::string s;
     std::getline(std::cin, s);
     io f;
     check_redirect(s, f);
     std::cout << f.exec << ' ' << f.input << ' ' << f.output << std::endl;
-    if (f.isAppend) std::cout << "is appending\n";
+    if (f.isAppend) std::cout << "is appending\n";*/
     //std::vector<std::string> v;
     //separate_by_char_without_quotes(s, '>', v);
     //for (std::string s : v) std::cout << s << std::endl;
