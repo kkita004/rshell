@@ -7,6 +7,9 @@ all: $(OBJ)
 	$(CXX) $(OBJ) -o bin/rshell
 	-@rm *.o 2>/dev/null || true
 
+rshell: rshell.o
+	$(CXX) rshell.o -o bin/rshell
+
 rshell.o: src/rshell.cpp
 	$(CXX) $(CXXFLAGS) -c src/rshell.cpp
 
