@@ -234,69 +234,69 @@ bool check_piping(const std::string s, std::vector<std::string>& v) {
 
 
     /* boost::tokenizer<boost::escaped_list_separator<char> > t(
-            s,
-            boost::escaped_list_separator<char>("\\", "|", "\"\'"));
-    for (
-            boost::tokenizer<boost::escaped_list_separator<char> >::iterator i
-            = t.begin();
-            i != t.end(); ++i) {
-        std::string temp = *i;
-        // Remove white space and tabs
-        boost::trim(temp);
-        boost::trim_if(temp, boost::is_any_of("\t"));
-        if (temp != "") v.push_back(temp);
+       s,
+       boost::escaped_list_separator<char>("\\", "|", "\"\'"));
+       for (
+       boost::tokenizer<boost::escaped_list_separator<char> >::iterator i
+       = t.begin();
+       i != t.end(); ++i) {
+       std::string temp = *i;
+    // Remove white space and tabs
+    boost::trim(temp);
+    boost::trim_if(temp, boost::is_any_of("\t"));
+    if (temp != "") v.push_back(temp);
     }*/
 
     /*
-    char * str = new char[s.size()];
-    strcpy(str, s.c_str());
-    char * pch;
-    pch = strtok(str, "|");
-    std::vector<std::string> temp;
-    while (pch != NULL) {
-        std::string t(pch);
-        boost::trim(t);
-        temp.push_back(t);
-        pch = strtok(NULL, "|");
-    }
+       char * str = new char[s.size()];
+       strcpy(str, s.c_str());
+       char * pch;
+       pch = strtok(str, "|");
+       std::vector<std::string> temp;
+       while (pch != NULL) {
+       std::string t(pch);
+       boost::trim(t);
+       temp.push_back(t);
+       pch = strtok(NULL, "|");
+       }
 
-    v = temp;
-    if(str) delete[] str;
+       v = temp;
+       if(str) delete[] str;
 
-    */
+*/
 
     /*for (unsigned i = 0; i < s.size(); ++i) {
-        if (s.at(i) == '\"') {
-            while (i < s.size()) {
-                if (i == s.size()) unfinishedQuotes = true;
-                i++;
-            }
-        } else if (s.at(i) == '\'') {
-            while (i < s.size()) {
-                if ( i == s.size()) unfinishedQuotes = true;
-                i++;
-            }
-        } else if (s.at(i) == '|')  {
-            v.push_back(s.substr(j,i - j));
-            j = i + 1;
-        }
-    }*/
+      if (s.at(i) == '\"') {
+      while (i < s.size()) {
+      if (i == s.size()) unfinishedQuotes = true;
+      i++;
+      }
+      } else if (s.at(i) == '\'') {
+      while (i < s.size()) {
+      if ( i == s.size()) unfinishedQuotes = true;
+      i++;
+      }
+      } else if (s.at(i) == '|')  {
+      v.push_back(s.substr(j,i - j));
+      j = i + 1;
+      }
+      }*/
     /*
-    if (unfinishedQuotes) return false;
-    return true;*/
+       if (unfinishedQuotes) return false;
+       return true;*/
 }
 
 
-    //boost::char_separator<char> delim("|");
-    /*boost::tokenizer<boost::escaped_list_separator<char> > tok(
-            s, boost::escaped_list_separator<char>("\\", "|", "\'\""));
-    for (std::string t : tok) {
-        boost::trim(t);
-        v.push_back(t);
-    }*/
-    //for (std::string s : v) {
-    //    std::cout << s << std::endl;
-    //}
+//boost::char_separator<char> delim("|");
+/*boost::tokenizer<boost::escaped_list_separator<char> > tok(
+  s, boost::escaped_list_separator<char>("\\", "|", "\'\""));
+  for (std::string t : tok) {
+  boost::trim(t);
+  v.push_back(t);
+  }*/
+//for (std::string s : v) {
+//    std::cout << s << std::endl;
+//}
 
 
 // Searches for character but not in quotes
@@ -348,14 +348,12 @@ bool separate_by_char_without_quotes(const std::string s, const char c,
         std::vector<std::string>& v) {
     boost::tokenizer<boost::escaped_list_separator<char> > tok(
             s, boost::escaped_list_separator<char>('\\', c, '\"'));
-    for (std::string t : tok) v.push_back(t);
+    for (std::string t : tok) if (t != "") v.push_back(t);
     // Multiple redirection characters found
     // Return error
     if (v.size() > 2) return false;
     return true;
 }
-
-
 
 /* Takes string and creates pairs of input/output
  *
@@ -373,93 +371,102 @@ bool check_redirect(const std::string s, io& f) {
 
     // Check if characters exist
 
-    bool inputExists, outputExists;
-    bool inputFirst;
+    bool inputExists, outputExists, inputFirst, append;
     unsigned inputIndex = find_without_quotes(s, '<');
     unsigned outputIndex = find_without_quotes(s, '>');
+    unsigned appendIndex = find_without_quotes(s, ">>");
 
     if (inputIndex == s.size()) inputExists = false;
     else inputExists = true;
     if (outputIndex == s.size()) outputExists = false;
     else outputExists = true;
+    if (appendIndex < s.size()) {
+        append = true;
+        outputExists = true;
+        outputIndex = appendIndex;
+    } else append = false;
 
     if (inputIndex < outputIndex) inputFirst = true;
     else inputFirst = false;
 
-    std::vector<std::string> v;
-    if (inputExists && !outputExists) {
-        if(!separate_by_char_without_quotes(s, '<', v)) return false;
-        f.exec = v.at(0);
-        //boost::trim(exec);
-        f.input= v.at(1);
-        //boost::trim(input);
-    } else if (!inputExists && outputExists) {
-        if(!separate_by_char_without_quotes(s, '>', v)) return false;
-        f.exec = v.at(0);
-        //boost::trim(exec);
-        f.output = v.at(1);
-        //boost::trim(output);
-    } else if (inputExists && outputExists) {
-        if (inputFirst) {
+    try {
+        std::vector<std::string> v;
+        if (inputExists && !outputExists) {
             if(!separate_by_char_without_quotes(s, '<', v)) return false;
             f.exec = v.at(0);
             //boost::trim(exec);
-            std::vector<std::string> v2;
-            if(!separate_by_char_without_quotes(v.at(1), '>', v2)) return false;
-            f.input = v2.at(0);
-            f.output = v2.at(1);
-        } else {
+            f.input= v.at(1);
+            //boost::trim(input);
+        } else if (!inputExists && outputExists) {
             if(!separate_by_char_without_quotes(s, '>', v)) return false;
             f.exec = v.at(0);
             //boost::trim(exec);
-            std::vector<std::string> v2;
-            if(!separate_by_char_without_quotes(v.at(1), '<', v2)) return false;
-            f.output = v2.at(0);
-            f.input = v2.at(1);
+            f.output = v.at(1);
+            //boost::trim(output);
+        } else if (inputExists && outputExists) {
+            if (inputFirst) {
+                if(!separate_by_char_without_quotes(s, '<', v)) return false;
+                f.exec = v.at(0);
+                //boost::trim(exec);
+                std::vector<std::string> v2;
+                if(!separate_by_char_without_quotes(v.at(1), '>', v2)) return false;
+                f.input = v2.at(0);
+                f.output = v2.at(1);
+            } else {
+                if(!separate_by_char_without_quotes(s, '>', v)) return false;
+                f.exec = v.at(0);
+                //boost::trim(exec);
+                std::vector<std::string> v2;
+                if(!separate_by_char_without_quotes(v.at(1), '<', v2)) return false;
+                f.output = v2.at(0);
+                f.input = v2.at(1);
+            }
+        } else {
+            // no redirection found, set string as executable
+            f.exec = s;
         }
-    } else {
-        // no redirection found, set string as executable
-        f.exec = s;
-    }
 
-    boost::trim(f.exec);
-    boost::trim(f.input);
-    boost::trim(f.output);
-    return true;
-    /*
-       std::vector<std::string> combo;
-       for (unsigned i = 0; i < temp.size(); ++i) {
-       if (temp.at(i).at(0) == '\"') {
-       unsigned j = i++;
-       std::string combostring = "";
-       while (j < temp.size()) {
-       j++;
-       combostring.append(temp.at(j));
-       if (temp.at(j).at(temp.at(j).size() - 1) == '\"');
-       break;
-       }
-       i = j;
-       combo.push_back(combostring);
-       }
-       combo.push_back(temp.at(i));
-       }
+        boost::trim(f.exec);
+        boost::trim(f.input);
+        boost::trim(f.output);
+        f.isAppend = append;}
+        catch (...) { std::cerr << "bad input\n"; return false;}
 
-       for (std::string t : combo) {
-       std::cout << t << std::endl;
-       }
+        return true;
+        /*
+           std::vector<std::string> combo;
+           for (unsigned i = 0; i < temp.size(); ++i) {
+           if (temp.at(i).at(0) == '\"') {
+           unsigned j = i++;
+           std::string combostring = "";
+           while (j < temp.size()) {
+           j++;
+           combostring.append(temp.at(j));
+           if (temp.at(j).at(temp.at(j).size() - 1) == '\"');
+           break;
+           }
+           i = j;
+           combo.push_back(combostring);
+           }
+           combo.push_back(temp.at(i));
+           }
+
+           for (std::string t : combo) {
+           std::cout << t << std::endl;
+           }
 
 
-       for (unsigned i = 0; i < temp.size(); ++i) {
-       if (temp.at(i) == "<") {
-    // input
-    std::cout << "input" << std::endl;
+           for (unsigned i = 0; i < temp.size(); ++i) {
+           if (temp.at(i) == "<") {
+        // input
+        std::cout << "input" << std::endl;
 
-    } else if (temp.at(i) == ">") {
-    // output
-    std::cout << "output" << std::endl;
+        } else if (temp.at(i) == ">") {
+        // output
+        std::cout << "output" << std::endl;
 
-    }
-    }*/
+        }
+        }*/
 }
 
 
@@ -541,7 +548,7 @@ void rshell_loop () {
                     break;
                 }
                 if (outputOn) fout = open(f.output.c_str(),
-                    O_CREAT | O_WRONLY | O_TRUNC, 0644);
+                        O_CREAT | O_WRONLY | O_TRUNC, 0644);
 
                 if (fout == -1) {
                     perror("output file open");
@@ -630,7 +637,15 @@ void rshell_loop () {
 int main(int argc, char **argv) {
     std::string s;
     std::getline(std::cin, s);
-    std::cout << find_without_quotes(s, ">>") << std::endl;
+    io f;
+    check_redirect(s, f);
+    std::cout << f.exec << ' ' << f.input << ' ' << f.output << std::endl;
+    if (f.isAppend) std::cout << "is appending\n";
+    //std::vector<std::string> v;
+    //separate_by_char_without_quotes(s, '>', v);
+    //for (std::string s : v) std::cout << s << std::endl;
+
+    //std::cout << find_without_quotes(s, ">>") << std::endl;
     //rshell_loop();
     /*std::vector<std::string> v;
       std::string s;
@@ -643,7 +658,7 @@ int main(int argc, char **argv) {
       }
       }*/
 
-    /*//check_piping(s, v);
+    /*s/check_piping(s, v);
     //std::vector<std::pair<std::string, std::pair<std::string, std::string> > > v;
     std::vector<std::string> v;
     check_piping(s, v);
