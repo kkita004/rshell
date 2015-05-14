@@ -59,4 +59,42 @@ Try 'ls --help' for more information.
 echo 'You're it!';
 error: no closing single quotation found
 ```
+<!--- ' -->
 
+# ls
+cs 100 ls
+
+## Building and Running
+```bash
+make
+bin/ls
+```
+
+## Features
+* Accepts multiple directory inputs
+``` bash
+bin/ls dir1, dir2 dir3
+```
+* Adjusts formatting to accomodate file sizes
+* Accepts 3 flags, -a, -l, and -R in any combination
+```bash
+$ bin/ls -laR
+$ bin/ls -Ral
+$ bin/ls -R -a -l
+
+```
+Will all result in the same output
+* Outputs almost exactly like standard ls
+
+## Dependencies
+Uses the [`boost`](https://www.boost.org) library for trimming and tokenizing.
+Uses `C++11` features.
+Requries a Unix machine.
+
+## Known Bugs and Limitations
+* Does not accept files as input, only directories
+```bash
+$ touch foo
+$ bin/ls foo
+* Cannot bring back the dead
+```
