@@ -22,8 +22,6 @@
 #include <boost/tokenizer.hpp>
 #include <boost/algorithm/string.hpp>
 
-
-
 struct io {
     io() {}
     io(std::string e, std::string i, std::string o) {
@@ -473,8 +471,34 @@ bool check_redirect(const std::string s, io& f) {
         }
         }*/
 }
+void change_descriptors(int newfd, int oldfd) {
+    // do nothing if same
+    if (newfd != oldfd) {
+        if(-1 == close(oldfd)) {
+            perror("close");
+            exit(1);
+        }
+        if(-1 == dup(newfd)) {
+            perror("dup");
+            exit(1);
+        }
+    }
+}
 
-
+void run_command(const char **args, int in, int out) {
+    pid_t pid= fork();
+    if (-1 == pid) {
+        perror("fork");
+        exit(1);
+    } else if (0 == pid) {
+        change_descriptors(in, 0);
+        change_descriptors(out, 1);
+        execvp(args[0], (char * const *) args);
+        perror("execvp");
+        _exit(1);
+    }
+    // if we get here we're in the parent
+}
 
 void rshell_loop () {
     std::string input_s;
@@ -512,7 +536,7 @@ void rshell_loop () {
         // Empty input
         boost::trim(input_s);
         if (input_s == "") continue;
-        int pid;
+        //int pid;
 
         std::vector<std::string> v_pipe, v_args;
         bool inputOn = false, outputOn = false;
@@ -577,6 +601,8 @@ void rshell_loop () {
                 }
 
                 // initialize argument array
+                for (unsigned j = 0; j < 1000; ++j) args[j] = NULL;
+
                 for (unsigned j = 0; j < v_args.size(); ++j) {
                     const char * p = v_args.at(j).c_str();
                     args[j] = p;
@@ -587,9 +613,9 @@ void rshell_loop () {
                     exit(1);
                 }
 
-                pid = fork();
+                //pid = fork();
                 // Something went wrong
-                if (pid == -1) {
+                /*if (pid == -1) {
                     perror("Fork error");
                     exit(1);
                     // If for some reason there's an error in exit();
@@ -600,29 +626,32 @@ void rshell_loop () {
                     execvp(args[0], (char * const *) args);
                     perror("Command error");
                     _exit(1);
-                }
+                }*/
+                run_command(args, in, out);
                 // Parent Process
-                else if (pid > 0) {
-                    // wait(0) till child process finishes
-                    int status = 0;
-                    if (wait(&status) == -1) {
-                        perror("child process error");
-                    } else {
-                        //child successfully changed
-                        if (status == 0) {
-                            // return value is true
-                            if (c == 2) {
-                                break;
-                            }
-                        }
-                        if (status != 0) {
-                            // return value is false;
-                            if (c == 1) {
-                                break;
-                            }
-                        }
 
+                //run_command((const char **) args, in, out);
+                //else if (pid > 0) {
+                //    wait(0) till child process finishes
+                int status = 0;
+                if (wait(&status) == -1) {
+                    perror("child process error");
+                } else {
+                    //child successfully changed
+                    if (status == 0) {
+                        // return value is true
+                        if (c == 2) {
+                            break;
+                        }
                     }
+                    if (status != 0) {
+                        // return value is false;
+                        if (c == 1) {
+                            break;
+                        }
+                    }
+
+                    //}
                 }
             }
             if (quit_loop) break;
