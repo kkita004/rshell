@@ -219,8 +219,12 @@ bool check_piping(const std::string s, std::vector<std::string>& v) {
 
         if (!doubleQuote && !singleQuote) {
             if (s.at(i) == '|') {
-                v.push_back(s.substr(j,i - j));
-                j = i + 1;
+                if (i + 1 < s.size() && s.at(i+1) != '|') {
+                    v.push_back(s.substr(j,i - j));
+                    j = i + 1;
+                } else if (i + 1 >= s.size()) {
+                    return false;
+                } else i++;
             } else if (i == s.size() - 1) {
                 v.push_back(s.substr(j));
             }
@@ -530,7 +534,7 @@ void rshell_loop () {
 
         std::vector<std::string> v_pipe;
         if(!check_piping(input_s, v_pipe)) {
-            std::cerr << "unfinished quotes";
+            std::cerr << "bad pipe input";
             continue;
         }
         // after unfinished quotes
@@ -574,6 +578,8 @@ void rshell_loop () {
                 // Buffer only holds 1000 commands total;
                 // Any longer will cause errors
                 // create argument array
+                for (unsigned j = 0; j < 1000; ++j) args[j] = NULL;
+
                 for (unsigned j = 0; j < v_args.size(); ++j) {
                     const char * p = v_args.at(j).c_str();
                     args[j] = p;
@@ -605,10 +611,15 @@ void rshell_loop () {
                     break;
                 }
 
+                // if only one command break
+                //if (v_pipe.size() == 1) break;
+
                 // create pipes
-                if (-1 == pipe(fd)) {
-                    perror("pipe");
-                    exit(1);
+                if (v_pipe.size() > 1) {
+                    if (-1 == pipe(fd)) {
+                        perror("pipe");
+                        exit(1);
+                    }
                 }
 
                 //pipe_in = fd[0];
@@ -656,7 +667,7 @@ void rshell_loop () {
                 exit(1);
             }
         }
-    // outside of loop
+        // outside of loop
     }
 }
 
