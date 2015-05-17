@@ -37,7 +37,9 @@ An error will be detected if quotes are left unclosed.
 kkita004@hammer.cs.ucr.edu$ echo testing &&     ; echo "will not appear"
 testing
 ```
-* Now supports piping and redirection!
+* Now supports piping and redirection with < > and |
+
+* Can also append by using >>
 
 * Can chain any number of pipes and redirection at the same time
 ## Dependencies
@@ -110,3 +112,5 @@ Will result in error
 $ cat < in > out | wc
 Will result in error
 ```
+* Redirection does not support file descriptors (e.g. 2>)
+* Redirection does support string redirection (e.g. <<<)
