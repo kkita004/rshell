@@ -71,7 +71,9 @@ std::string check_connector(const std::string s, int* con) {
 }
 
 
-
+/* Given a string with a command, stores inside a vector
+ * the command and its arguments, and also gets the type of connector
+ */
 void parse_args(const std::string s, std::vector<std::string>& v, int * connector) {
     using namespace boost;
     std::string curr_str = s;
@@ -548,18 +550,12 @@ void rshell_loop () {
 
         //unsigned pipecount = 0;
 
-        std::vector<std::string> v_pipe;
-        if(!check_piping(input_s, v_pipe)) {
-            std::cerr << "bad pipe input";
-            continue;
-        }
-        // after unfinished quotes
-
         int pipe_in = 0;
         int pipe_out = 1;
 
         bool inputOn = false, outputOn = false, pipeOn = false;
         std::string parse;
+        std::string parse_nocon;
         const char* args[1000] = {NULL};
         std::vector<std::string> v_args;
         io f;
@@ -568,31 +564,48 @@ void rshell_loop () {
         int c = 0;
         // initialize fds
         int fd[2];
-        //bool pipeOn = true;
 
         // last prog will be run separately
         bool quit_loop = false;
-        for (auto p = v_pipe.begin(); p != v_pipe.end(); ++p) {
-            // Check if i/o redirection is necessary
-            if (!check_redirect(*p, f)) {
+        std::vector<std::string> v_pipe;
+
+        // first get each chain of commands
+        // separate by connectors
+
+        int i = 0;
+        while ((unsigned) i < (input_s).size() && i >= 0) {
+            // Grab the first set of commands separated by a connector
+            parse = parse_string(input_s, &i);
+            parse_nocon = check_connector(parse, &c);
+            // No closing quotes, break
+            if (i < 0) {
                 quit_loop = true;
                 break;
             }
-            int i = 0;
-            while ((unsigned) i < (f.exec).size() && i >= 0) {
+            v_pipe.clear();
+            if(!check_piping(parse_nocon, v_pipe)) {
+                std::cerr << "bad pipe input";
+                continue;
+            }
+            // after unfinished quotes
+            for (auto p = v_pipe.begin(); p != v_pipe.end(); ++p) {
+                // Check if i/o redirection is necessary
+                if (!check_redirect(*p, f)) {
+                    quit_loop = true;
+                    break;
+                }
+                // take command to execute, and create vector
+                // of arguments
                 v_args.clear();
+                // discard variable, need args, don't need connectors
+                int d;
+                parse_args(f.exec, v_args, &d);
+
                 // parse piping
                 // break if something goes wrong
                 if (f.input != "") inputOn = true;
                 if (f.output != "") outputOn = true;
                 if (v_pipe.size() > 1) pipeOn = true;
-                parse = parse_string(f.exec, &i);
-                // No closing quotes, break
-                if (i < 0) {
-                    quit_loop = true;
-                    break;
-                }
-                parse_args(parse, v_args, &c);
                 // Buffer only holds 1000 commands total;
                 // Any longer will cause errors
                 // create argument array
@@ -611,7 +624,6 @@ void rshell_loop () {
                 if (!strcmp(e, args[0])) {
                     exit(1);
                 }
-
 
                 if (inputOn) fin = open(f.input.c_str(), O_RDONLY);
                 if (fin == -1) {
@@ -644,9 +656,8 @@ void rshell_loop () {
 
                 //pipe_in = fd[0];
 
-
                 // original fork
-                if (inputOn && pipeOn) {
+                if (inputOn && !outputOn && pipeOn) {
                     run_command((const char **) args, fin, fd[1]);
                     if (-1 == close(fd[0])) {
                         perror("close");
@@ -668,14 +679,14 @@ void rshell_loop () {
                     break;
                     //run_command((const char **) args, pipe_in, fout);
                 }
-               /*
-                else if (inputOn && !outputOn && !pipeOn) {
-                    run_command((const char **) args, fin, 1);
-                } else if (!inputOn && outputOn && !pipeOn) {
-                    run_command((const char **) args, 0, fout);
-                } else {
-                    run_command((const char **) args, 0, 1);
-                }*/
+                /*
+                   else if (inputOn && !outputOn && !pipeOn) {
+                   run_command((const char **) args, fin, 1);
+                   } else if (!inputOn && outputOn && !pipeOn) {
+                   run_command((const char **) args, 0, fout);
+                   } else {
+                   run_command((const char **) args, 0, 1);
+                   }*/
                 // at this point the process is in the parent
 
                 if (v_pipe.size() > 1) {
@@ -686,42 +697,45 @@ void rshell_loop () {
                     pipe_in = fd[0];
                 }
                 // closing pipe_in?
-                //}
+                }
                 //child successfully changed
-        }
-        if (quit_loop) break;
-    }
-    if (quit_loop) continue;
+            if (quit_loop) break;
 
-    if (inputOn) {
-        pipe_in = fin;
-    }
-    if (outputOn) {
-        pipe_out = fout;
-    }
-    run_command((const char **) args, pipe_in, pipe_out);
+            if (inputOn) {
+                pipe_in = fin;
+            }
+            if (outputOn) {
+                pipe_out = fout;
+            }
+            run_command((const char **) args, pipe_in, pipe_out);
 
-    int status = 0;
-    for (unsigned k = 0; k < v_pipe.size() - 1; ++k) {
-        if (wait(&status) == -1) {
-            perror("wait");
-            exit(1);
+            int status = 0;
+            for (unsigned k = 0; k < v_pipe.size() - 1; ++k) {
+                if (wait(&status) == -1) {
+                    perror("wait");
+                    exit(1);
+                }
+            }
+            // final wait will determine what ends
+            if (-1 == wait(&status)) {
+                perror("wait");
+                exit(1);
+            } else {
+                if (status == 0) {
+                    if (c == 2) break;
+                } else if (status != 0) {
+                    if (c == 1) break;
+                }
+            }
+
+
         }
+        //if (quit_loop) continue;
+
+        // outside of loop
     }
-    // final wait will determine what ends
-    if (-1 == wait(&status)) {
-        perror("wait");
-        exit(1);
-    } else {
-        if (status == 0) {
-            if (c == 2) break;
-        } else if (status != 0) {
-            if (c == 1) break;
-        }
-    }
-    // outside of loop
 }
-}
+
 
 int main(int argc, char **argv) {
     rshell_loop();
