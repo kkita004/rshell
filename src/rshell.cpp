@@ -436,7 +436,7 @@ bool check_redirect(const std::string s, io& f) {
         boost::trim(f.input);
         boost::trim(f.output);
         f.isAppend = append;}
-        catch (...) { std::cerr << "bad input\n"; return false;}
+        catch (...) { std::cerr << "error: bad input\n"; return false;}
 
         return true;
 }
@@ -576,6 +576,11 @@ void rshell_loop () {
         while ((unsigned) i < (input_s).size() && i >= 0) {
             // Grab the first set of commands separated by a connector
             parse = parse_string(input_s, &i);
+            boost::trim(parse);
+            if (parse == "") {
+                quit_loop = true;
+                break;
+            }
             parse_nocon = check_connector(parse, &c);
             // No closing quotes, break
             if (i < 0) {
@@ -584,7 +589,7 @@ void rshell_loop () {
             }
             v_pipe.clear();
             if(!check_piping(parse_nocon, v_pipe)) {
-                std::cerr << "bad pipe input";
+                std::cerr << "error: bad pipe input";
                 continue;
             }
             // after unfinished quotes
@@ -674,7 +679,7 @@ void rshell_loop () {
                         perror("close fd1");
                         exit(1);
                     }
-                    std::cerr << "output redirect before pipe\n";
+                    std::cerr << "error: output redirect before pipe\n";
                     quit_loop = true;
                     break;
                     //run_command((const char **) args, pipe_in, fout);

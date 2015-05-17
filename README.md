@@ -37,7 +37,9 @@ An error will be detected if quotes are left unclosed.
 kkita004@hammer.cs.ucr.edu$ echo testing &&     ; echo "will not appear"
 testing
 ```
+* Now supports piping and redirection!
 
+* Can chain any number of pipes and redirection at the same time
 ## Dependencies
 Uses the [`boost`](https://www.boost.org) library for trimming and tokenizing.
 Uses `C++11` features.
@@ -96,5 +98,15 @@ Requries a Unix machine.
 ```bash
 $ touch foo
 $ bin/ls foo
+```
 * Cannot bring back the dead
+* Redirection must have the program name come first
+``` bash
+$ < in cat > out
+Will result in error
+```
+* Redirection does not support output redirection before a pipe
+``` bash
+$ cat < in > out | wc
+Will result in error
 ```
