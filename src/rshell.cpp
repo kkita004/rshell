@@ -71,7 +71,9 @@ std::string check_connector(const std::string s, int* con) {
 }
 
 
-
+/* Given a string with a command, stores inside a vector
+ * the command and its arguments, and also gets the type of connector
+ */
 void parse_args(const std::string s, std::vector<std::string>& v, int * connector) {
     using namespace boost;
     std::string curr_str = s;
@@ -219,8 +221,12 @@ bool check_piping(const std::string s, std::vector<std::string>& v) {
 
         if (!doubleQuote && !singleQuote) {
             if (s.at(i) == '|') {
-                v.push_back(s.substr(j,i - j));
-                j = i + 1;
+                if (i + 1 < s.size() && s.at(i+1) != '|') {
+                    v.push_back(s.substr(j,i - j));
+                    j = i + 1;
+                } else if (i + 1 >= s.size()) {
+                    return false;
+                } else i++;
             } else if (i == s.size() - 1) {
                 v.push_back(s.substr(j));
             }
@@ -430,43 +436,76 @@ bool check_redirect(const std::string s, io& f) {
         boost::trim(f.input);
         boost::trim(f.output);
         f.isAppend = append;}
-        catch (...) { std::cerr << "bad input\n"; return false;}
+        catch (...) { std::cerr << "error: bad input\n"; return false;}
 
         return true;
-        /*
-           std::vector<std::string> combo;
-           for (unsigned i = 0; i < temp.size(); ++i) {
-           if (temp.at(i).at(0) == '\"') {
-           unsigned j = i++;
-           std::string combostring = "";
-           while (j < temp.size()) {
-           j++;
-           combostring.append(temp.at(j));
-           if (temp.at(j).at(temp.at(j).size() - 1) == '\"');
-           break;
-           }
-           i = j;
-           combo.push_back(combostring);
-           }
-           combo.push_back(temp.at(i));
-           }
+}
 
-           for (std::string t : combo) {
-           std::cout << t << std::endl;
-           }
-
-
-           for (unsigned i = 0; i < temp.size(); ++i) {
-           if (temp.at(i) == "<") {
-        // input
-        std::cout << "input" << std::endl;
-
-        } else if (temp.at(i) == ">") {
-        // output
-        std::cout << "output" << std::endl;
-
+void change_descriptors(int newfd, int oldfd) {
+    if (newfd != oldfd) {
+        if (-1 == close(oldfd)) {
+            perror("close");
+            exit(1);
         }
-        }*/
+        if (-1 == dup(newfd)) {
+            perror("dup");
+            exit(1);
+        }
+    }
+}
+
+void run_command(const char **args, int pin, int pout) {
+    pid_t pid = fork();
+    if (-1 == pid) {
+        perror("fork");
+        exit(1);
+    } else if (pid == 0) {
+        change_descriptors(pin, 0);
+        change_descriptors(pout, 1);
+        /*
+        if (pin != 0) {
+            if (-1 == close(0)) {
+                perror("close");
+                exit(1);
+            }
+            if (-1 == dup(pin)) {
+                perror("dup");
+                exit(1);
+            }*/
+
+            /*
+               if(-1 == dup2(pin, 0)) {
+               perror("dup2");
+               exit(1);
+               }
+               if(-1 == close(pin)) {
+               perror("close");
+               exit(1);
+               }*/
+        //}
+        /*if (pout != 1) {
+            if (-1 == close(1)) {
+                perror("close");
+                exit(1);
+            }
+            if (-1 == dup(pout)) {
+                perror("dup");
+                exit(1);
+            }*/
+            /*
+               if (-1 == dup2(pout, 1)) {
+               perror("dup2");
+               exit(1);
+               }
+               if (-1 == close(pout)) {
+               perror("close");
+               exit(1);
+               }*/
+        //}
+        execvp(args[0], (char * const *)args);
+        perror("execvp");
+        _exit(1);
+    }
 }
 
 
@@ -507,80 +546,80 @@ void rshell_loop () {
         // Empty input
         boost::trim(input_s);
         if (input_s == "") continue;
-        int pid;
+        //int pid;
 
+        //unsigned pipecount = 0;
+
+        int pipe_in = 0;
+        int pipe_out = 1;
+
+        bool inputOn = false, outputOn = false, pipeOn = false;
+        std::string parse;
+        std::string parse_nocon;
+        const char* args[1000] = {NULL};
+        std::vector<std::string> v_args;
+        io f;
+        // file descriptor holders
+        int fin = 0, fout = 1;
+        int c = 0;
+        // initialize fds
+        int fd[2];
+
+        // last prog will be run separately
+        bool quit_loop = false;
         std::vector<std::string> v_pipe;
-        check_piping(input_s, v_pipe);
-        for (auto p = v_pipe.begin(); p != v_pipe.end(); ++p) {
-            int i = 0;
-            bool quit_loop = false;
-            while ((unsigned) i < (*p).size() && i >= 0) {
+
+        // first get each chain of commands
+        // separate by connectors
+
+        int i = 0;
+        while ((unsigned) i < (input_s).size() && i >= 0) {
+            // Grab the first set of commands separated by a connector
+            parse = parse_string(input_s, &i);
+            boost::trim(parse);
+            if (parse == "") {
+                quit_loop = true;
+                break;
+            }
+            parse_nocon = check_connector(parse, &c);
+            // No closing quotes, break
+            if (i < 0) {
+                quit_loop = true;
+                break;
+            }
+            v_pipe.clear();
+            if(!check_piping(parse_nocon, v_pipe)) {
+                std::cerr << "error: bad pipe input";
+                continue;
+            }
+            // after unfinished quotes
+            for (auto p = v_pipe.begin(); p != v_pipe.end(); ++p) {
+                // Check if i/o redirection is necessary
+                if (!check_redirect(*p, f)) {
+                    quit_loop = true;
+                    break;
+                }
+                // take command to execute, and create vector
+                // of arguments
+                v_args.clear();
+                // discard variable, need args, don't need connectors
+                int d;
+                parse_args(f.exec, v_args, &d);
+
                 // parse piping
                 // break if something goes wrong
-                std::vector<std::string> v_args;
-                int c = 0;
-
-                std::cout << "p: [" << *p <<  "]" << std::endl;
-                std::cout << "parsing string" << std::endl;
-
-                // Check if i/o redirection is necessary
-                io f;
-                check_redirect(*p, f);
-                bool inputOn = false, outputOn = false;
                 if (f.input != "") inputOn = true;
                 if (f.output != "") outputOn = true;
-
-                std::string parse = parse_string(f.exec, &i);
-                // No closing quotes, break
-                if (i < 0) {
-                    quit_loop = true;
-                    break;
-                }
-                std::cout << "parsing args" << std::endl;
-                parse_args(parse, v_args, &c);
-                // file descriptor holders
-                int fin = -2, fout = -2;
-
-                if (inputOn) fin = open(f.input.c_str(), O_RDONLY);
-                if (fin == -1) {
-                    perror("input file open");
-                    quit_loop = true;
-                    break;
-                }
-                if (outputOn) fout = open(f.output.c_str(),
-                        O_CREAT | O_WRONLY | O_TRUNC, 0644);
-
-                if (fout == -1) {
-                    perror("output file open");
-                    quit_loop = true;
-                    break;
-                }
-
-
-
-
-
-                /*
-                   for (unsigned b = 0; b < v.size(); ++b) {
-                   std::cout << "VECTOR[" << b << "]:[" << v.at(b) << "]" << std::endl;
-                   }
-                   */
-
+                if (v_pipe.size() > 1) pipeOn = true;
                 // Buffer only holds 1000 commands total;
                 // Any longer will cause errors
-                const char* args[1000] = { NULL };
-                // Clear buffer
-                /*
-                   for (unsigned i = v.size(); i < 1000 - v.size(); ++i) {
-                   args[i] = '\0';
-                   }*/
-
                 // create argument array
+                for (unsigned j = 0; j < 1000; ++j) args[j] = NULL;
+
                 for (unsigned j = 0; j < v_args.size(); ++j) {
                     const char * p = v_args.at(j).c_str();
                     args[j] = p;
                 }
-
                 // if blank command, break
                 if (v_args.size() == 0) {
                     quit_loop = true;
@@ -591,90 +630,120 @@ void rshell_loop () {
                     exit(1);
                 }
 
-                pid = fork();
-                // Something went wrong
-                if (pid == -1) {
-                    perror("Fork error");
-                    exit(1);
-                    // If for some reason there's an error in exit();
-                    perror("exit error");
+                if (inputOn) fin = open(f.input.c_str(), O_RDONLY);
+                if (fin == -1) {
+                    perror("opening input file");
+                    quit_loop = true;
+                    break;
                 }
-                // Child Process
-                else if (pid == 0) {
-                    execvp(args[0], (char * const *) args);
-                    perror("Command error");
-                    _exit(1);
-                }
-                // Parent Process
-                else if (pid > 0) {
-                    // wait(0) till child process finishes
-                    int status = 0;
-                    if (wait(&status) == -1) {
-                        perror("child process error");
-                    } else {
-                        //child successfully changed
-                        if (status == 0) {
-                            // return value is true
-                            if (c == 2) {
-                                break;
-                            }
-                        }
-                        if (status != 0) {
-                            // return value is false;
-                            if (c == 1) {
-                                break;
-                            }
-                        }
+                int outputFlags = O_CREAT | O_WRONLY | O_TRUNC;
+                if (f.isAppend) outputFlags = O_CREAT | O_WRONLY | O_APPEND;
+                if (outputOn) fout = open(f.output.c_str(), outputFlags, 0644);
 
+                if (fout == -1) {
+                    perror("opening output file");
+                    quit_loop = true;
+                    break;
+                }
+
+                // if only one command break
+                //if (v_pipe.size() == 1) break;
+                // exit loop if one command remaining
+                if (p == v_pipe.end() - 1) break;
+
+                // create pipes
+                if (pipeOn) {
+                    if (-1 == pipe(fd)) {
+                        perror("pipe");
+                        exit(1);
                     }
                 }
-            }
+
+                //pipe_in = fd[0];
+
+                // original fork
+                if (inputOn && !outputOn && pipeOn) {
+                    run_command((const char **) args, fin, fd[1]);
+                    if (-1 == close(fd[0])) {
+                        perror("close");
+                        exit(1);
+                    }
+                } else if (!outputOn && pipeOn)  {
+                    run_command((const char **) args, pipe_in, fd[1]);
+                } else if (outputOn && pipeOn) {
+                    if(-1 == close(fd[0])) {
+                        perror("close fd0");
+                        exit(1);
+                    }
+                    if(-1 == close(fd[1])) {
+                        perror("close fd1");
+                        exit(1);
+                    }
+                    std::cerr << "error: output redirect before pipe\n";
+                    quit_loop = true;
+                    break;
+                    //run_command((const char **) args, pipe_in, fout);
+                }
+                /*
+                   else if (inputOn && !outputOn && !pipeOn) {
+                   run_command((const char **) args, fin, 1);
+                   } else if (!inputOn && outputOn && !pipeOn) {
+                   run_command((const char **) args, 0, fout);
+                   } else {
+                   run_command((const char **) args, 0, 1);
+                   }*/
+                // at this point the process is in the parent
+
+                if (v_pipe.size() > 1) {
+                    if (-1 == close(fd[1])) {
+                        perror("close");
+                        exit(1);
+                    }
+                    pipe_in = fd[0];
+                }
+                // closing pipe_in?
+                }
+                //child successfully changed
             if (quit_loop) break;
+
+            if (inputOn) {
+                pipe_in = fin;
+            }
+            if (outputOn) {
+                pipe_out = fout;
+            }
+            run_command((const char **) args, pipe_in, pipe_out);
+
+            int status = 0;
+            for (unsigned k = 0; k < v_pipe.size() - 1; ++k) {
+                if (wait(&status) == -1) {
+                    perror("wait");
+                    exit(1);
+                }
+            }
+            // final wait will determine what ends
+            if (-1 == wait(&status)) {
+                perror("wait");
+                exit(1);
+            } else {
+                if (status == 0) {
+                    if (c == 2) break;
+                } else if (status != 0) {
+                    if (c == 1) break;
+                }
+            }
+
+
         }
+        //if (quit_loop) continue;
+
+        // outside of loop
     }
 }
 
+
 int main(int argc, char **argv) {
-    std::string s;
-    std::getline(std::cin, s);
-    io f;
-    check_redirect(s, f);
-    std::cout << f.exec << ' ' << f.input << ' ' << f.output << std::endl;
-    if (f.isAppend) std::cout << "is appending\n";
-    //std::vector<std::string> v;
-    //separate_by_char_without_quotes(s, '>', v);
-    //for (std::string s : v) std::cout << s << std::endl;
-
-    //std::cout << find_without_quotes(s, ">>") << std::endl;
-    //rshell_loop();
-    /*std::vector<std::string> v;
-      std::string s;
-      std::getline(std::cin, s);
-      boost::trim(s);
-      if(!check_piping(s, v)) {std::cerr << "err" << std::endl;}
-      else {
-      for (std::string t : v) {
-      std::cout << t << std::endl;
-      }
-      }*/
-
-    /*s/check_piping(s, v);
-    //std::vector<std::pair<std::string, std::pair<std::string, std::string> > > v;
-    std::vector<std::string> v;
-    check_piping(s, v);
-    for (std::string s : v) {
-    std::cout << s << std::endl;
-    }
-    for (unsigned i = 0; i < v.size(); ++i) {
-    io f;
-    check_redirect(v.at(i), f);
-    std::cout << "input: " << v.at(i) << std::endl;
-    std::cout << "exec: " << f.exec << std::endl;
-    std::cout << "input: " << f.input << std::endl;
-    std::cout << "output: " << f.output << std::endl;
-    std::cout << "-------------------------------------------------------" << std::endl;
-    }
-    //rshell_loop();*/
-
+    rshell_loop();
+    // mian
     return 0;
 }

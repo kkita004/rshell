@@ -1,0 +1,190 @@
+Script started on Sun 17 May 2015 01:39:26 AM PDT
+~
+kkita004@hammer $ cd repo/rshell
+~/repo/rshell
+kkita004@hammer $ bin/rshell
+
+kkita004@hammer.cs.ucr.edu$ # test redirection
+kkita004@hammer.cs.ucr.edu$ ls
+   bin	extra  LICENSE	Makefile  README.md  src  tests
+kkita004@hammer.cs.ucr.edu$ echo foobar > out
+kkita004@hammer.cs.ucr.edu$ cat < out
+foobar
+kkita004@hammer.cs.ucr.edu$ echo foobar2               >             out
+kkita004@hammer.cs.ucr.edu$ cat                <                out
+foobar2
+kkita004@hammer.cs.ucr.edu$ echo foobar3>out
+kkita004@hammer.cs.ucr.edu$ cat<out
+foobar3
+kkita004@hammer.cs.ucr.edu$ cat<out>out2
+kkita004@hammer.cs.ucr.edu$ cat out2
+foobar3
+kkita004@hammer.cs.ucr.edu$ cat                     <              out2     > out3
+kkita004@hammer.cs.ucr.edu$ cat out3
+foobar3
+kkita004@hammer.cs.ucr.edu$ rm out out2 out3
+kkita004@hammer.cs.ucr.edu$ # appending (creating file)
+kkita004@hammer.cs.ucr.edu$ echo goodafternoon >> out.
+kkita004@hammer.cs.ucr.edu$ ls | grep out.
+out.
+kkita004@hammer.cs.ucr.edu$ cat out.
+goodafternoon
+kkita004@hammer.cs.ucr.edu$ # appending (to already made file)
+kkita004@hammer.cs.ucr.edu$ echo goodevening>>out.
+kkita004@hammer.cs.ucr.edu$ cat out.
+goodafternoon
+goodevening
+kkita004@hammer.cs.ucr.edu$ echo and goodnight                  >>        out.
+kkita004@hammer.cs.ucr.edu$ cat out.
+goodafternoon
+goodevening
+and goodnight
+kkita004@hammer.cs.ucr.edu$ # both input redirection and appending redirection
+kkita004@hammer.cs.ucr.edu$             echo "good morning!" > input
+kkita004@hammer.cs.ucr.edu$          cat < input >> out.
+kkita004@hammer.cs.ucr.edu$ cat out.
+goodafternoon
+goodevening
+and goodnight
+good morning!
+kkita004@hammer.cs.ucr.edu$ rm input out.
+kkita004@hammer.cs.ucr.edu$ # test piping
+kkita004@hammer.cs.ucr.edu$ ls | tr a-z A-Z
+ 
+BIN
+EXTRA
+LICENSE
+MAKEFILE
+README.MD
+SRC
+TESTS
+kkita004@hammer.cs.ucr.edu$ ls|tr a-z A-Z
+ 
+BIN
+EXTRA
+LICENSE
+MAKEFILE
+README.MD
+SRC
+TESTS
+kkita004@hammer.cs.ucr.edu$ ls     |          tr a-z A-Z
+ 
+BIN
+EXTRA
+LICENSE
+MAKEFILE
+README.MD
+SRC
+TESTS
+kkita004@hammer.cs.ucr.edu$     ls | grep src | tr a-z A-Z
+SRC
+kkita004@hammer.cs.ucr.edu$ ls -a|grep bin|tr a-z A-Z
+BIN
+kkita004@hammer.cs.ucr.edu$ ls -a|grep tests                        |                            tr a-z A-Z
+TESTS
+kkita004@hammer.cs.ucr.edu$ # many pipes
+kkita004@hammer.cs.ucr.edu$ ls | sed 's/bin/hello/g' | grep a | tr a-z A-Z | sed 's/A/B/g'
+EXTRB
+MBKEFILE
+kkita004@hammer.cs.ucr.edu$ # test piping and redirection
+kkita004@hammer.cs.ucr.edu$ ls -al > in
+kkita004@hammer.cs.ucr.edu$ cat < in | tr a-z A-Z
+TOTAL 44
+-RW------- 1 KKITA004 CSMAJS    4 MAY 15 15:49  
+DRWX------ 8 KKITA004 CSMAJS 4096 MAY 17 01:38 .
+DRWX------ 8 KKITA004 CSMAJS 4096 MAY 11 11:14 ..
+DRWX------ 2 KKITA004 CSMAJS 4096 MAY 17 01:26 BIN
+DRWX------ 2 KKITA004 CSMAJS 4096 MAY 17 00:35 EXTRA
+DRWX------ 8 KKITA004 CSMAJS 4096 MAY 17 01:29 .GIT
+DRWX------ 2 KKITA004 CSMAJS 4096 MAY  1 22:49 .HIDDEN
+-RW------- 1 KKITA004 CSMAJS    0 MAY 17 01:38 IN
+-RW------- 1 KKITA004 CSMAJS  427 APR 17 14:26 LICENSE
+-RW------- 1 KKITA004 CSMAJS  890 MAY 16 15:51 MAKEFILE
+-RW------- 1 KKITA004 CSMAJS    8 MAY 17 01:33 .NFS0000000000CBBF3F000004C8
+-RW------- 1 KKITA004 CSMAJS    8 MAY 17 01:34 .NFS0000000000CBBF41000004C9
+-RW------- 1 KKITA004 CSMAJS    8 MAY 17 01:34 .NFS0000000000CBBF42000004CA
+-RW------- 1 KKITA004 CSMAJS   54 MAY 17 01:36 .NFS0000000000CBBF44000004CD
+-RW------- 1 KKITA004 CSMAJS   14 MAY 17 01:35 .NFS0000000000CBBF45000004CC
+-RW------- 1 KKITA004 CSMAJS 2327 MAY 13 20:32 README.MD
+DRWX------ 2 KKITA004 CSMAJS 4096 MAY 17 01:26 SRC
+DRWX------ 2 KKITA004 CSMAJS 4096 MAY 17 01:32 TESTS
+kkita004@hammer.cs.ucr.edu$ echo hello > hi
+kkita004@hammer.cs.ucr.edu$ cat hi | sed 's/hello/goodbye/g' > bye
+kkita004@hammer.cs.ucr.edu$ cat bye
+goodbye
+kkita004@hammer.cs.ucr.edu$ cat < in | tr A-Z a-z | tee out | tr a-z A-Z > out2
+kkita004@hammer.cs.ucr.edu$ cat out
+total 44
+-rw------- 1 kkita004 csmajs    4 may 15 15:49  
+drwx------ 8 kkita004 csmajs 4096 may 17 01:38 .
+drwx------ 8 kkita004 csmajs 4096 may 11 11:14 ..
+drwx------ 2 kkita004 csmajs 4096 may 17 01:26 bin
+drwx------ 2 kkita004 csmajs 4096 may 17 00:35 extra
+drwx------ 8 kkita004 csmajs 4096 may 17 01:29 .git
+drwx------ 2 kkita004 csmajs 4096 may  1 22:49 .hidden
+-rw------- 1 kkita004 csmajs    0 may 17 01:38 in
+-rw------- 1 kkita004 csmajs  427 apr 17 14:26 license
+-rw------- 1 kkita004 csmajs  890 may 16 15:51 makefile
+-rw------- 1 kkita004 csmajs    8 may 17 01:33 .nfs0000000000cbbf3f000004c8
+-rw------- 1 kkita004 csmajs    8 may 17 01:34 .nfs0000000000cbbf41000004c9
+-rw------- 1 kkita004 csmajs    8 may 17 01:34 .nfs0000000000cbbf42000004ca
+-rw------- 1 kkita004 csmajs   54 may 17 01:36 .nfs0000000000cbbf44000004cd
+-rw------- 1 kkita004 csmajs   14 may 17 01:35 .nfs0000000000cbbf45000004cc
+-rw------- 1 kkita004 csmajs 2327 may 13 20:32 readme.md
+drwx------ 2 kkita004 csmajs 4096 may 17 01:26 src
+drwx------ 2 kkita004 csmajs 4096 may 17 01:32 tests
+kkita004@hammer.cs.ucr.edu$ cat out2
+TOTAL 44
+-RW------- 1 KKITA004 CSMAJS    4 MAY 15 15:49  
+DRWX------ 8 KKITA004 CSMAJS 4096 MAY 17 01:38 .
+DRWX------ 8 KKITA004 CSMAJS 4096 MAY 11 11:14 ..
+DRWX------ 2 KKITA004 CSMAJS 4096 MAY 17 01:26 BIN
+DRWX------ 2 KKITA004 CSMAJS 4096 MAY 17 00:35 EXTRA
+DRWX------ 8 KKITA004 CSMAJS 4096 MAY 17 01:29 .GIT
+DRWX------ 2 KKITA004 CSMAJS 4096 MAY  1 22:49 .HIDDEN
+-RW------- 1 KKITA004 CSMAJS    0 MAY 17 01:38 IN
+-RW------- 1 KKITA004 CSMAJS  427 APR 17 14:26 LICENSE
+-RW------- 1 KKITA004 CSMAJS  890 MAY 16 15:51 MAKEFILE
+-RW------- 1 KKITA004 CSMAJS    8 MAY 17 01:33 .NFS0000000000CBBF3F000004C8
+-RW------- 1 KKITA004 CSMAJS    8 MAY 17 01:34 .NFS0000000000CBBF41000004C9
+-RW------- 1 KKITA004 CSMAJS    8 MAY 17 01:34 .NFS0000000000CBBF42000004CA
+-RW------- 1 KKITA004 CSMAJS   54 MAY 17 01:36 .NFS0000000000CBBF44000004CD
+-RW------- 1 KKITA004 CSMAJS   14 MAY 17 01:35 .NFS0000000000CBBF45000004CC
+-RW------- 1 KKITA004 CSMAJS 2327 MAY 13 20:32 README.MD
+DRWX------ 2 KKITA004 CSMAJS 4096 MAY 17 01:26 SRC
+DRWX------ 2 KKITA004 CSMAJS 4096 MAY 17 01:32 TESTS
+kkita004@hammer.cs.ucr.edu$ rm in hi bye out out2
+kkita004@hammer.cs.ucr.edu$ # testing appending
+kkita004@hammer.cs.ucr.edu$ rm out
+kkita004@hammer.cs.ucr.edu$ echo there is no man on the moon | sed 's/man/cheese/g' >> out
+kkita004@hammer.cs.ucr.edu$ echo there is no man on the moon | sed 's/moon/pizza/g' | tee out2 | tr a-z A-Z >>     out
+kkita004@hammer.cs.ucr.edu$ cat out
+there is no cheese on the moon
+THERE IS NO MAN ON THE PIZZA
+kkita004@hammer.cs.ucr.edu$ # quotes
+kkita004@hammer.cs.ucr.edu$ echo "this | symbol should not cause problems"
+this | symbol should not cause problems
+kkita004@hammer.cs.ucr.edu$ echo "this | symbol can be replaced" | tr "|" "!"
+this ! symbol can be replaced
+kkita004@hammer.cs.ucr.edu$ # combining both redirection and connectors
+kkita004@hammer.cs.ucr.edu$ echo foo > in
+kkita004@hammer.cs.ucr.edu$ echo hi && cat < in && echo bye
+hi
+foo
+bye
+kkita004@hammer.cs.ucr.edu$ rm in out
+kkita004@hammer.cs.ucr.edu$ # error checking
+kkita004@hammer.cs.ucr.edu$ echo bin > in
+kkita004@hammer.cs.ucr.edu$ <in cat >  out2
+error: bad input
+kkita004@hammer.cs.ucr.edu$ < in out2
+error: bad input
+kkita004@hammer.cs.ucr.edu$ >out cat < in
+error: bad input
+kkita004@hammer.cs.ucr.edu$ cat < in | tr A-Z a-z > out2 | tee test
+error: output redirect before pipe
+kkita004@hammer.cs.ucr.edu$ exit
+~/repo/rshell
+kkita004@hammer $ exit
+
+Script done on Sun 17 May 2015 01:54:46 AM PDT
