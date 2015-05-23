@@ -6,6 +6,9 @@
 #include <cstring>
 #include <pwd.h>
 
+// getenv()
+#include <stdlib.h>
+
 // fork()
 #include <unistd.h>
 
@@ -18,6 +21,12 @@
 // perror()
 // strtok()
 #include <stdio.h>
+
+// signal()
+#include <signal.h>
+
+//PATH_MAX
+#include <linux/limits.h>
 
 #include <boost/tokenizer.hpp>
 #include <boost/algorithm/string.hpp>
@@ -194,9 +203,7 @@ std::string parse_string(const std::string s, int* index) {
         }
         // If comment is found, ignore rest of line
         if (s.at(i) == '#') {
-            //std::cout << "comment found, ignoring rest of line" << std::endl;
             *index = s.size();
-
             return s.substr(start, i - start);
         }
         ++i;
@@ -237,72 +244,7 @@ bool check_piping(const std::string s, std::vector<std::string>& v) {
 
     // check if quotes ended, otherwise it is error
     return (!doubleQuote && !singleQuote);
-
-
-    /* boost::tokenizer<boost::escaped_list_separator<char> > t(
-       s,
-       boost::escaped_list_separator<char>("\\", "|", "\"\'"));
-       for (
-       boost::tokenizer<boost::escaped_list_separator<char> >::iterator i
-       = t.begin();
-       i != t.end(); ++i) {
-       std::string temp = *i;
-    // Remove white space and tabs
-    boost::trim(temp);
-    boost::trim_if(temp, boost::is_any_of("\t"));
-    if (temp != "") v.push_back(temp);
-    }*/
-
-    /*
-       char * str = new char[s.size()];
-       strcpy(str, s.c_str());
-       char * pch;
-       pch = strtok(str, "|");
-       std::vector<std::string> temp;
-       while (pch != NULL) {
-       std::string t(pch);
-       boost::trim(t);
-       temp.push_back(t);
-       pch = strtok(NULL, "|");
-       }
-
-       v = temp;
-       if(str) delete[] str;
-
-*/
-
-    /*for (unsigned i = 0; i < s.size(); ++i) {
-      if (s.at(i) == '\"') {
-      while (i < s.size()) {
-      if (i == s.size()) unfinishedQuotes = true;
-      i++;
-      }
-      } else if (s.at(i) == '\'') {
-      while (i < s.size()) {
-      if ( i == s.size()) unfinishedQuotes = true;
-      i++;
-      }
-      } else if (s.at(i) == '|')  {
-      v.push_back(s.substr(j,i - j));
-      j = i + 1;
-      }
-      }*/
-    /*
-       if (unfinishedQuotes) return false;
-       return true;*/
 }
-
-
-//boost::char_separator<char> delim("|");
-/*boost::tokenizer<boost::escaped_list_separator<char> > tok(
-  s, boost::escaped_list_separator<char>("\\", "|", "\'\""));
-  for (std::string t : tok) {
-  boost::trim(t);
-  v.push_back(t);
-  }*/
-//for (std::string s : v) {
-//    std::cout << s << std::endl;
-//}
 
 
 // Searches for character but not in quotes
@@ -462,53 +404,18 @@ void run_command(const char **args, int pin, int pout) {
     } else if (pid == 0) {
         change_descriptors(pin, 0);
         change_descriptors(pout, 1);
-        /*
-        if (pin != 0) {
-            if (-1 == close(0)) {
-                perror("close");
-                exit(1);
-            }
-            if (-1 == dup(pin)) {
-                perror("dup");
-                exit(1);
-            }*/
-
-            /*
-               if(-1 == dup2(pin, 0)) {
-               perror("dup2");
-               exit(1);
-               }
-               if(-1 == close(pin)) {
-               perror("close");
-               exit(1);
-               }*/
-        //}
-        /*if (pout != 1) {
-            if (-1 == close(1)) {
-                perror("close");
-                exit(1);
-            }
-            if (-1 == dup(pout)) {
-                perror("dup");
-                exit(1);
-            }*/
-            /*
-               if (-1 == dup2(pout, 1)) {
-               perror("dup2");
-               exit(1);
-               }
-               if (-1 == close(pout)) {
-               perror("close");
-               exit(1);
-               }*/
-        //}
         execvp(args[0], (char * const *)args);
         perror("execvp");
         _exit(1);
     }
 }
 
-
+bool replace(std::string& source, const std::string to_replace, const std::string with) {
+    size_t pos = source.find(to_replace);
+    if (pos == std::string::npos) return false;
+    source.replace(pos, to_replace.size(), with);
+    return true;
+}
 
 void rshell_loop () {
     std::string input_s;
@@ -534,8 +441,30 @@ void rshell_loop () {
     }
 
     while(1) {
+        // Get current working directory
+        char cwd[PATH_MAX];
+        if (0 == getcwd(cwd, PATH_MAX)) {
+            perror("getcwd");
+            exit(1);
+        }
+
+        // Check if path contains HOME
+        //std::string cwd_str(cwd);
+        char* pHome;
+        //std::string home_char "~";
+        if (0 == (pHome = getenv("HOME"))) {
+            perror("getenv");
+            exit(1);
+        }
+
+        // path contains HOME
+        std::string tcwd(cwd);
+        std::string thome(pHome);
+
+        replace(tcwd, thome, "~");
+
         if ((pwd && pwd->pw_name) || hostname[0] != '\0') {
-            printf("%s@%s$ ", login, hostname);
+            printf("%s@%s:%s$ ", login, hostname, tcwd.c_str());
         } else {
             printf("$ ");
 
@@ -682,16 +611,7 @@ void rshell_loop () {
                     std::cerr << "error: output redirect before pipe\n";
                     quit_loop = true;
                     break;
-                    //run_command((const char **) args, pipe_in, fout);
                 }
-                /*
-                   else if (inputOn && !outputOn && !pipeOn) {
-                   run_command((const char **) args, fin, 1);
-                   } else if (!inputOn && outputOn && !pipeOn) {
-                   run_command((const char **) args, 0, fout);
-                   } else {
-                   run_command((const char **) args, 0, 1);
-                   }*/
                 // at this point the process is in the parent
 
                 if (v_pipe.size() > 1) {
@@ -702,8 +622,8 @@ void rshell_loop () {
                     pipe_in = fd[0];
                 }
                 // closing pipe_in?
-                }
-                //child successfully changed
+            }
+            //child successfully changed
             if (quit_loop) break;
 
             if (inputOn) {
@@ -736,13 +656,21 @@ void rshell_loop () {
 
         }
         //if (quit_loop) continue;
-
         // outside of loop
     }
 }
 
+/*
+   void handle(int x) {
+   std::cout << "Please kill yourself" << std::endl;
+   }*/
 
 int main(int argc, char **argv) {
+    /*
+       if (-1 == signal(SIGINT, handle)) {
+       perror("signal");
+       exit(1);
+       }*/
     rshell_loop();
     // mian
     return 0;
