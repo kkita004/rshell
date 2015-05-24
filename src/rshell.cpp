@@ -417,11 +417,67 @@ bool replace(std::string& source, const std::string to_replace, const std::strin
     return true;
 }
 
+bool change_directory(const char ** args) {
+    static char oldp[PATH_MAX];
+    static char p[PATH_MAX];
+    strcpy(p, getenv("PWD"));
+    if (0 == p) {
+        std::cerr << "Could not get $PWD";
+        return false;
+    }
+
+    if (args[1] == '\0') {
+        strcpy(oldp, p);
+        strcpy(p, getenv("HOME"));
+        if (0 == p) {
+            std::cerr << "Could not get $HOME\n";
+            return false;
+        }
+    } else if (!strcmp(args[1], "-\0")) {
+        strcpy(p, getenv("OLDPWD"));
+        if (0 == p) {
+            std::cerr << "Could not get $OLDPWD\n";
+            return false;
+        }
+        strcpy(oldp, getenv("PWD"));
+        if (0 == oldp) {
+            std::cerr << "Could not get $PWD\n";
+            return false;
+        }
+    } else {
+        strcpy(oldp, getenv("PWD"));
+        if (0 == oldp) {
+            std::cerr << "Could not get $PWD\n";
+            return false;
+        }
+        strcpy(p, args[1]);
+    }
+
+    if (-1 == chdir(p)) {
+        perror("chdir");
+        exit(1);
+    }
+
+    if (-1 == setenv("OLDPWD", oldp, 1)) {
+        perror("setenv");
+        exit(1);
+    }
+    if (-1 == setenv("PWD", p, 1)) {
+        perror("setenv");
+        exit(1);
+    }
+
+    return true;
+}
+
+
+
 void rshell_loop () {
     std::string input_s;
     std::cout << std::endl;
 
-    char e[] = {"exit"};
+    char e[]={"exit"};
+    char cd[]={"cd"};
     std::string prompt;
 
     // Setup prompt
@@ -555,8 +611,11 @@ void rshell_loop () {
                     break;
                 }
                 // If command is exit
-                if (!strcmp(e, args[0])) {
-                    exit(1);
+                if (!strcmp(e, args[0])) exit(1);
+
+                if (!strcmp(cd, args[0])) {
+                    change_directory(args);
+                    break;
                 }
 
                 if (inputOn) fin = open(f.input.c_str(), O_RDONLY);
@@ -632,6 +691,7 @@ void rshell_loop () {
             if (outputOn) {
                 pipe_out = fout;
             }
+            if (!strcmp(cd, args[0])) continue;
             run_command((const char **) args, pipe_in, pipe_out);
 
             int status = 0;

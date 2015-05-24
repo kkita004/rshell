@@ -65,6 +65,8 @@ error: no closing single quotation found
 ```
 <!--- ' -->
 
+* Attempting to use `cd -` without prior changing directories will send you to $HOME.
+
 # ls
 cs 100 ls
 
