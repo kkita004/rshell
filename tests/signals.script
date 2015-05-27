@@ -1,0 +1,105 @@
+Script started on Wed 27 May 2015 04:01:22 PM PDT
+~
+kkita004@hammer $ cd repo/rshell
+~/repo/rshell
+kkita004@hammer $ bin/rshell
+
+kkita004@hammer.cs.ucr.edu:~/repo/rshell$ # testing cd
+kkita004@hammer.cs.ucr.edu:~/repo/rshell$ # prompt shows current location, replaces home with ~
+kkita004@hammer.cs.ucr.edu:~/repo/rshell$ # showing current directory
+kkita004@hammer.cs.ucr.edu:~/repo/rshell$ # using cd - first will lead to home directory
+kkita004@hammer.cs.ucr.edu:~/repo/rshell$ cd -
+kkita004@hammer.cs.ucr.edu:~$ cd -
+kkita004@hammer.cs.ucr.edu:~/repo/rshell$ ls
+   bin	extra  LICENSE	Makefile  README.md  src  syscalls  tests
+kkita004@hammer.cs.ucr.edu:~/repo/rshell$ # go to root
+kkita004@hammer.cs.ucr.edu:~/repo/rshell$ cd
+kkita004@hammer.cs.ucr.edu:~$ ls
+-	     CS100   CS141	Downloads  Pictures  saved	 test
+bash	     CS12    CS61	kk	   pkg	     sketchbook  trash
+bash-source  CS120B  Desktop	Music	   Public    t		 untitled
+CS10	     CS14    Documents	output	   repo      Templates	 Videos
+kkita004@hammer.cs.ucr.edu:~$ # go back to previous directory
+kkita004@hammer.cs.ucr.edu:~$ cd -
+kkita004@hammer.cs.ucr.edu:~/repo/rshell$ ls
+   bin	extra  LICENSE	Makefile  README.md  src  syscalls  tests
+kkita004@hammer.cs.ucr.edu:~/repo/rshell$ # go to bin directory
+kkita004@hammer.cs.ucr.edu:~/repo/rshell$ cd bin
+kkita004@hammer.cs.ucr.edu:~/repo/rshell/bin$ # go to same directory
+kkita004@hammer.cs.ucr.edu:~/repo/rshell/bin$ cd .
+kkita004@hammer.cs.ucr.edu:~/repo/rshell/bin$ # go up a directory
+kkita004@hammer.cs.ucr.edu:~/repo/rshell/bin$ cd ..
+kkita004@hammer.cs.ucr.edu:~/repo/rshell$ # go to bin and back
+kkita004@hammer.cs.ucr.edu:~/repo/rshell$ cd bin/..
+kkita004@hammer.cs.ucr.edu:~/repo/rshell$ # go all the way from home to bin and back
+kkita004@hammer.cs.ucr.edu:~/repo/rshell$ cd
+kkita004@hammer.cs.ucr.edu:~$ cd repo/rshell/bin/../../..
+kkita004@hammer.cs.ucr.edu:~$ # chaining cd
+kkita004@hammer.cs.ucr.edu:~$ cd repo/rshell; ls
+   bin	extra  LICENSE	Makefile  README.md  src  syscalls  tests
+kkita004@hammer.cs.ucr.edu:~/repo/rshell$ cd ..; ls;
+regexProgram  rshell  rshell-1	rshell-2  test	testing  ttygif  ucr-cs100
+kkita004@hammer.cs.ucr.edu:~/repo$ cd rshell
+kkita004@hammer.cs.ucr.edu:~/repo/rshell$ cd bin; ls; cd .. ; ls
+cp  ls	mv  rm	rshell
+   bin	extra  LICENSE	Makefile  README.md  src  syscalls  tests
+kkita004@hammer.cs.ucr.edu:~/repo/rshell$ # cd will always return a success, even if error
+kkita004@hammer.cs.ucr.edu:~/repo/rshell$ # when chaining, will auto run next command even if && or ||
+kkita004@hammer.cs.ucr.edu:~/repo/rshell$ cd asdf && echo hi
+chdir: No such file or directory
+hi
+kkita004@hammer.cs.ucr.edu:~/repo/rshell$ cd || echo a
+a
+kkita004@hammer.cs.ucr.edu:~$ echo a; echo b; cd repo/rshell
+a
+b
+kkita004@hammer.cs.ucr.edu:~/repo/rshell$ # this behavior is similar to bash
+kkita004@hammer.cs.ucr.edu:~/repo/rshell$ exit
+~/repo/rshell
+kkita004@hammer $ # now inside bash terminal
+~/repo/rshell
+kkita004@hammer $ cd asdf || echo foo
+bash: cd: asdf: No such file or directory
+foo
+~/repo/rshell
+kkita004@hammer $ bin/rshell
+
+kkita004@hammer.cs.ucr.edu:~/repo/rshell$ # cannot pipe cd
+kkita004@hammer.cs.ucr.edu:~/repo/rshell$ # piping will only run first cd command, then run no other commands
+kkita004@hammer.cs.ucr.edu:~/repo/rshell$ cd | grep asdf
+kkita004@hammer.cs.ucr.edu:~$ cd repo/rshell | cat | cd ..
+kkita004@hammer.cs.ucr.edu:~/repo/rshell$ # cannot redirect cd
+kkita004@hammer.cs.ucr.edu:~/repo/rshell$ cd .. > output
+kkita004@hammer.cs.ucr.edu:~/repo$ cd rshell
+kkita004@hammer.cs.ucr.edu:~/repo/rshell$ cat output
+cat: output: No such file or directory
+kkita004@hammer.cs.ucr.edu:~/repo/rshell$ ls
+   bin	extra  LICENSE	Makefile  README.md  src  syscalls  tests  typescript
+kkita004@hammer.cs.ucr.edu:~/repo/rshell$ echo "src" > input
+kkita004@hammer.cs.ucr.edu:~/repo/rshell$ # attempting to redirect cd will strip all characters after redirect commands
+kkita004@hammer.cs.ucr.edu:~/repo/rshell$ cd < input
+kkita004@hammer.cs.ucr.edu:~$ cd repo/rshell
+kkita004@hammer.cs.ucr.edu:~/repo/rshell$ # catching Ctrl-c
+kkita004@hammer.cs.ucr.edu:~/repo/rshell$ # Ctrl-c does not kill the shell
+kkita004@hammer.cs.ucr.edu:~/repo/rshell$ ^C
+kkita004@hammer.cs.ucr.edu:~/repo/rshell$ asdf^C
+kkita004@hammer.cs.ucr.edu:~/repo/rshell$ exit^C
+kkita004@hammer.cs.ucr.edu:~/repo/rshell$ # Will send SIGINT to program
+kkita004@hammer.cs.ucr.edu:~/repo/rshell$ cat
+foo
+foo
+bar
+bar
+^Ckkita004@hammer.cs.ucr.edu:~/repo/rshell$ cat
+foo^Ckkita004@hammer.cs.ucr.edu:~/repo/rshell$ ^C
+kkita004@hammer.cs.ucr.edu:~/repo/rshell$ ^C
+kkita004@hammer.cs.ucr.edu:~/repo/rshell$ cd 
+kkita004@hammer.cs.ucr.edu:~$ cd ..
+kkita004@hammer.cs.ucr.edu:/home/csmajs$ # current working directory does not have home
+kkita004@hammer.cs.ucr.edu:/home/csmajs$ # does not replace with ~
+kkita004@hammer.cs.ucr.edu:/home/csmajs$ exit
+~/repo/rshell
+kkita004@hammer $ exit
+exit
+
+Script done on Wed 27 May 2015 04:07:59 PM PDT

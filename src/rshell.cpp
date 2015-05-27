@@ -4,6 +4,7 @@
 #include <sstream>
 #include <algorithm>
 #include <cstring>
+#include <limits>
 #include <pwd.h>
 
 // getenv()
@@ -31,7 +32,10 @@
 #include <boost/tokenizer.hpp>
 #include <boost/algorithm/string.hpp>
 
-
+// Globals
+//bool isChild = false;
+pid_t lastChild = 0;
+bool childExists = false;
 
 struct io {
     io() {}
@@ -396,18 +400,22 @@ void change_descriptors(int newfd, int oldfd) {
     }
 }
 
+
 void run_command(const char **args, int pin, int pout) {
+    childExists = true;
     pid_t pid = fork();
     if (-1 == pid) {
         perror("fork");
         exit(1);
     } else if (pid == 0) {
+        //isChild = true;
         change_descriptors(pin, 0);
         change_descriptors(pout, 1);
         execvp(args[0], (char * const *)args);
         perror("execvp");
         _exit(1);
     }
+    lastChild = pid;
 }
 
 bool replace(std::string& source, const std::string to_replace, const std::string with) {
@@ -455,7 +463,8 @@ bool change_directory(const char ** args) {
 
     if (-1 == chdir(p)) {
         perror("chdir");
-        exit(1);
+        return false;
+        //exit(1);
     }
 
     if (-1 == setenv("OLDPWD", oldp, 1)) {
@@ -470,6 +479,27 @@ bool change_directory(const char ** args) {
     return true;
 }
 
+
+
+static void sighandle(int signum) {
+    switch(signum) {
+        case SIGINT:
+        if (lastChild != 0 && childExists) {
+            //std::cerr << "in child" << std::endl;
+            kill(lastChild, SIGINT);
+            int status;
+            wait(&status);
+            if (-1 == status) {
+                perror("wait");
+                exit(1);
+            }
+        }
+        //std::cerr << "in parent" << std::endl;
+        break;
+        default:
+        break;
+    }
+}
 
 
 void rshell_loop () {
@@ -527,7 +557,12 @@ void rshell_loop () {
         }
         getline(std::cin, input_s);
         // end of ctrl-d
-        if (!std::cin.good()) input_s = "exit";
+        if (!std::cin.good()) {
+            std::cin.clear();
+            //std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+            std::cout << std::endl;
+            continue;
+        }
         // Empty input
         boost::trim(input_s);
         if (input_s == "") continue;
@@ -693,16 +728,17 @@ void rshell_loop () {
             }
             if (!strcmp(cd, args[0])) continue;
             run_command((const char **) args, pipe_in, pipe_out);
-
             int status = 0;
             for (unsigned k = 0; k < v_pipe.size() - 1; ++k) {
-                if (wait(&status) == -1) {
+                wait(&status);
+                if (-1 == status) {
                     perror("wait");
                     exit(1);
                 }
             }
             // final wait will determine what ends
-            if (-1 == wait(&status)) {
+            wait(&status);
+            if (-1 == status) {
                 perror("wait");
                 exit(1);
             } else {
@@ -713,24 +749,24 @@ void rshell_loop () {
                 }
             }
 
-
+           childExists = false;
         }
         //if (quit_loop) continue;
         // outside of loop
     }
 }
 
-/*
-   void handle(int x) {
-   std::cout << "Please kill yourself" << std::endl;
-   }*/
-
 int main(int argc, char **argv) {
+
+    struct sigaction act;
+    act.sa_handler = &sighandle;
+    sigaction(SIGINT, &act, NULL);
     /*
        if (-1 == signal(SIGINT, handle)) {
        perror("signal");
        exit(1);
        }*/
+    //std::cerr << "PID: " << getpid() << std::endl;
     rshell_loop();
     // mian
     return 0;

@@ -42,6 +42,14 @@ testing
 * Can also append by using >>
 
 * Can chain any number of pipes and redirection at the same time
+
+* Can now change directories using the `cd` command
+
+* Using `cd` by itself will go to home directory
+
+* Using `cd -` will go to previous directory
+
+* If `cd -` is used before any other `cd`, then it will lead to home directory
 ## Dependencies
 Uses the [`boost`](https://www.boost.org) library for trimming and tokenizing.
 Uses `C++11` features.
@@ -66,6 +74,10 @@ error: no closing single quotation found
 <!--- ' -->
 
 * Attempting to use `cd -` without prior changing directories will send you to $HOME.
+
+* Cannot pipe the `cd` command. Doing so will result in `cd` executing and nothing else in the chain of pipes.
+
+* Redirecting input to/from `cd` will result in only the command `cd` executing, as the redirections are removed
 
 # ls
 cs 100 ls
